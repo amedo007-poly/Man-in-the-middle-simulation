@@ -530,6 +530,7 @@
             opacity: 0;
             pointer-events: none;
             transition: all 0.5s ease;
+            min-width: 200px;
         }
 
         .entity.eve.visible {
@@ -560,8 +561,9 @@
             font-size: 11px;
             font-family: 'Roboto Mono', monospace;
             display: none;
-            max-width: 150px;
+            max-width: 180px;
             word-break: break-all;
+            margin-bottom: 8px;
         }
 
         .entity .message-box.visible {
@@ -572,8 +574,9 @@
         .eve-actions {
             display: flex;
             gap: 5px;
-            margin-top: 10px;
+            margin-top: 5px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .eve-btn {
