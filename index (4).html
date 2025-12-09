@@ -1,0 +1,2869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Man-in-the-Middle Attack - Interactive Security Simulation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&family=Playfair+Display:wght@700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #F25912;
+            --primary-dark: #D64710;
+            --secondary: #5C3E94;
+            --dark: #211832;
+            --dark-light: #2d1f3d;
+            --darker: #1a1228;
+            --light: #EFECE3;
+            --text: #c4c0b6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ===== LOADING SCREEN ===== */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-content .icon {
+            font-size: 64px;
+            color: var(--primary);
+            opacity: 0;
+            animation: fall 0.9s forwards;
+        }
+
+        .loading-content h1 {
+            font-size: 42px;
+            color: var(--light);
+            font-family: 'Playfair Display', serif;
+            margin: 20px 0 10px;
+            opacity: 0;
+            animation: fall 0.9s forwards 0.3s;
+        }
+
+        .loading-content h2 {
+            font-size: 18px;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fall 0.9s forwards 0.5s;
+        }
+
+        .loading-icons {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            opacity: 0;
+            animation: fall 0.9s forwards 0.7s;
+        }
+
+        .loading-icons i {
+            font-size: 28px;
+            color: var(--secondary);
+        }
+
+        @keyframes fall {
+            0% { opacity: 0; transform: translateY(-100px); }
+            60% { opacity: 1; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        #main-content {
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        #main-content.visible {
+            opacity: 1;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: rgba(33, 24, 50, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--primary);
+            padding: 15px 0;
+        }
+
+        .nav-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            background-color: rgba(92, 62, 148, 0.2);
+            padding: 8px;
+            border-radius: 50px;
+            border: 1px solid rgba(242, 89, 18, 0.3);
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-family: 'Raleway', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            color: var(--light);
+            background: rgba(242, 89, 18, 0.1);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+        }
+
+        /* ===== SECTION TITLES ===== */
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-header h1 {
+            font-size: 48px;
+            font-family: 'Playfair Display', serif;
+            color: var(--light);
+            margin-bottom: 10px;
+        }
+
+        .section-header p {
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .section-header hr {
+            width: 80px;
+            height: 3px;
+            background: var(--primary);
+            border: none;
+            margin: 20px auto;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(242, 89, 18, 0.15);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid var(--primary);
+            margin-bottom: 20px;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(242, 89, 18, 0.15);
+        }
+
+        /* ===== STATS BAR ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .stat-value.blue { color: #60a5fa; }
+        .stat-value.red { color: #f87171; }
+        .stat-value.orange { color: #fb923c; }
+        .stat-value.green { color: #4ade80; }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text);
+            margin-top: 5px;
+        }
+
+        /* ===== SCENARIO CARDS ===== */
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .scenario-card {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(242, 89, 18, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .scenario-card:hover::before {
+            left: 100%;
+        }
+
+        .scenario-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .scenario-card.active {
+            border-color: var(--primary);
+            background: rgba(242, 89, 18, 0.1);
+        }
+
+        .scenario-card .icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .scenario-card h3 {
+            color: var(--light);
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .scenario-card p {
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .scenario-card .status {
+            margin-top: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .status.vulnerable { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .status.warning { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
+        .status.secure { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+
+        /* ===== CONTROL PANEL ===== */
+        .control-panel {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-input {
+            background: var(--darker);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--light);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            width: 280px;
+            transition: all 0.3s ease;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(242, 89, 18, 0.2);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(242, 89, 18, 0.4);
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 2px solid #ef4444;
+            color: #f87171;
+        }
+
+        .btn-danger:hover {
+            background: #ef4444;
+            color: var(--dark);
+        }
+
+        .btn-danger.active {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: var(--dark);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--secondary);
+            color: var(--light);
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary);
+        }
+
+        .quick-messages {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            background: var(--darker);
+            border: 1px solid rgba(92, 62, 148, 0.3);
+            color: var(--text);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* ===== NETWORK VISUALIZATION ===== */
+        .network-container {
+            background: var(--darker);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            position: relative;
+            min-height: 380px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .entity {
+            position: absolute;
+            background: var(--dark-light);
+            border: 2px solid;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .entity:hover {
+            transform: translateY(-5px);
+        }
+
+        .entity .avatar {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .entity h3 {
+            color: var(--light);
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .entity .role {
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .entity .ip {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 11px;
+            background: var(--darker);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .entity.alice {
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-color: #60a5fa;
+        }
+
+        .entity.alice .role { color: #60a5fa; }
+
+        .entity.bob {
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-color: #4ade80;
+        }
+
+        .entity.bob .role { color: #4ade80; }
+
+        .entity.eve {
+            left: 50%;
+            top: 20px;
+            transform: translateX(-50%) translateY(-20px);
+            border-color: #f87171;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .entity.eve.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .entity.eve .role { color: #f87171; }
+
+        .entity.eve .active-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .entity .message-box {
+            margin-top: 10px;
+            background: var(--darker);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: 'Roboto Mono', monospace;
+            display: none;
+            max-width: 150px;
+            word-break: break-all;
+        }
+
+        .entity .message-box.visible {
+            display: block;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .eve-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .eve-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .eve-btn.modify { background: #f97316; color: white; }
+        .eve-btn.drop { background: #6b7280; color: white; }
+        .eve-btn.forward { background: #8b5cf6; color: white; }
+
+        .eve-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Network Lines */
+        .network-line {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, #60a5fa, #8b5cf6);
+            top: 50%;
+            border-radius: 2px;
+        }
+
+        .network-line.left {
+            left: 180px;
+            width: calc(50% - 200px);
+        }
+
+        .network-line.right {
+            right: 180px;
+            width: calc(50% - 200px);
+        }
+
+        .network-line.intercepted {
+            background: linear-gradient(90deg, #ef4444, #f97316);
+        }
+
+        /* Packet Animation */
+        .packet {
+            position: absolute;
+            background: var(--dark-light);
+            border: 2px solid #60a5fa;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-family: 'Roboto Mono', monospace;
+            max-width: 180px;
+            z-index: 50;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .packet.encrypted {
+            border-color: #4ade80;
+        }
+
+        .packet.encrypted .content {
+            color: #4ade80;
+        }
+
+        .packet-trail {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: trailFade 0.5s forwards;
+        }
+
+        @keyframes trailFade {
+            to { opacity: 0; transform: scale(0.3); }
+        }
+
+        /* Scenario Badge */
+        .scenario-badge {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-light);
+            border: 1px solid var(--secondary);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .encryption-badge {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid #4ade80;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #4ade80;
+            display: none;
+        }
+
+        .encryption-badge.visible {
+            display: block;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        /* ===== LOGS ===== */
+        .logs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .log-panel {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .log-header {
+            background: var(--darker);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(92, 62, 148, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .log-header h4 {
+            color: var(--light);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .log-header h4 i {
+            color: var(--primary);
+        }
+
+        .log-content {
+            padding: 15px 20px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(92, 62, 148, 0.1);
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .log-time {
+            color: #6b7280;
+            margin-right: 10px;
+        }
+
+        .log-entry.info { color: #60a5fa; }
+        .log-entry.success { color: #4ade80; }
+        .log-entry.warning { color: #fb923c; }
+        .log-entry.danger { color: #f87171; }
+
+        /* ===== CAPTURED DATA PANEL ===== */
+        .captured-panel {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .captured-panel.visible {
+            display: block;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .captured-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .captured-header h4 {
+            color: #f87171;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .captured-count {
+            background: #ef4444;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .captured-content {
+            background: var(--darker);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .captured-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(92, 62, 148, 0.2);
+        }
+
+        .captured-item:last-child {
+            border-bottom: none;
+        }
+
+        .captured-item .meta {
+            color: #6b7280;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .captured-item .data {
+            color: #f87171;
+        }
+
+        /* ===== TAB CONTENT ===== */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== DEMO TAB ===== */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .browser-window {
+            background: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        .browser-header {
+            background: #2d2d2d;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .browser-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .browser-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .browser-dot.red { background: #ff5f56; }
+        .browser-dot.yellow { background: #ffbd2e; }
+        .browser-dot.green { background: #27ca40; }
+
+        .browser-url {
+            flex: 1;
+            background: #3d3d3d;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .browser-url .lock { color: #f87171; }
+        .browser-url .lock.secure { color: #4ade80; }
+
+        .browser-body {
+            background: white;
+            padding: 30px;
+            min-height: 350px;
+        }
+
+        .login-form {
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .login-form .logo {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .login-form h2 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #555;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .demo-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .demo-buttons button {
+            flex: 1;
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .terminal-header {
+            background: #161b22;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .terminal-body {
+            padding: 20px;
+            height: 350px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .terminal-line {
+            margin-bottom: 5px;
+        }
+
+        .terminal-line.green { color: #4ade80; }
+        .terminal-line.yellow { color: #fbbf24; }
+        .terminal-line.red { color: #f87171; }
+        .terminal-line.gray { color: #6b7280; }
+        .terminal-line.white { color: #e5e7eb; }
+
+        .cursor-blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .demo-captured {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .demo-captured h4 {
+            color: var(--primary);
+            font-size: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .demo-captured-content {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        /* ===== TERMINAL TAB ===== */
+        .hacker-terminal {
+            background: #0d1117;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(242, 89, 18, 0.2);
+        }
+
+        .hacker-terminal .terminal-body {
+            height: 400px;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .terminal-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .terminal-stat {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .terminal-stat h5 {
+            color: var(--primary);
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .terminal-stat-content {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        /* ===== LEARN TAB ===== */
+        .learn-section {
+            margin-bottom: 40px;
+        }
+
+        .learn-card {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .learn-card:hover {
+            border-color: var(--primary);
+        }
+
+        .learn-card h3 {
+            color: var(--primary);
+            font-size: 22px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .learn-card p {
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .attack-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .attack-type {
+            background: var(--darker);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .attack-type h4 {
+            color: var(--light);
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .attack-type p {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .attack-stages {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .attack-stage {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            background: var(--darker);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .stage-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: var(--dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .stage-content h4 {
+            color: var(--light);
+            margin-bottom: 5px;
+        }
+
+        .stage-content p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* ===== QUIZ TAB ===== */
+        .quiz-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .quiz-progress {
+            height: 4px;
+            background: var(--darker);
+            border-radius: 2px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .quiz-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.5s ease;
+        }
+
+        .quiz-question {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .quiz-meta {
+            color: var(--text);
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .quiz-text {
+            color: var(--light);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-option {
+            background: var(--darker);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 10px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary);
+            transform: translateX(10px);
+        }
+
+        .quiz-option .letter {
+            width: 35px;
+            height: 35px;
+            background: var(--dark-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--light);
+        }
+
+        .quiz-option.correct {
+            background: rgba(74, 222, 128, 0.1);
+            border-color: #4ade80;
+        }
+
+        .quiz-option.correct .letter {
+            background: #4ade80;
+            color: var(--dark);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(248, 113, 113, 0.1);
+            border-color: #f87171;
+        }
+
+        .quiz-option.incorrect .letter {
+            background: #f87171;
+            color: var(--dark);
+        }
+
+        .quiz-explanation {
+            background: var(--darker);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .quiz-explanation.correct { border-left: 4px solid #4ade80; }
+        .quiz-explanation.incorrect { border-left: 4px solid #f87171; }
+
+        .quiz-result {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .quiz-result .emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-result h2 {
+            color: var(--light);
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .quiz-result p {
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        /* ===== PREVENTION TAB ===== */
+        .prevention-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .prevention-card {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            display: flex;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .prevention-card:hover {
+            border-color: var(--primary);
+            transform: translateX(10px);
+        }
+
+        .prevention-icon {
+            font-size: 40px;
+            flex-shrink: 0;
+        }
+
+        .prevention-content h3 {
+            color: var(--light);
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .prevention-content p {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .prevention-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .prevention-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .prevention-tag.essential {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .prevention-tag.recommended {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+
+        .prevention-tag.critical {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+
+        .checklist-section {
+            background: var(--dark-light);
+            border: 2px solid rgba(92, 62, 148, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .checklist-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .checklist-header h3 {
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checklist-header h3 i {
+            color: var(--primary);
+        }
+
+        .checklist-count {
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--darker);
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checklist-item:hover {
+            background: rgba(92, 62, 148, 0.2);
+        }
+
+        .checklist-item input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .checklist-progress {
+            height: 4px;
+            background: var(--darker);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .checklist-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.5s ease;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid rgba(92, 62, 148, 0.3);
+            margin-top: 50px;
+        }
+
+        footer p {
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        footer .highlight {
+            color: var(--primary);
+        }
+
+        /* ===== REVEAL ANIMATION ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .stats-grid, .scenarios-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .logs-grid, .demo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .attack-types, .terminal-stats, .checklist-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .entity.alice, .entity.bob {
+                position: relative;
+                left: auto;
+                right: auto;
+                top: auto;
+                transform: none;
+                margin: 10px;
+            }
+
+            .network-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                min-height: auto;
+                padding: 20px;
+            }
+
+            .network-line {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-tab span {
+                display: none;
+            }
+
+            .section-header h1 {
+                font-size: 32px;
+            }
+
+            .stats-grid, .scenarios-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-row {
+                flex-direction: column;
+            }
+
+            .control-input {
+                width: 100%;
+            }
+
+            .prevention-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="icon">🔐</div>
+            <h1>MITM Attack Simulation</h1>
+            <h2>Interactive Security Education</h2>
+            <div class="loading-icons">
+                <i class="fas fa-shield-alt"></i>
+                <i class="fas fa-network-wired"></i>
+                <i class="fas fa-user-secret"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+        <!-- Header -->
+        <header>
+            <nav class="nav-container">
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-tab="simulation">
+                        <i class="fas fa-play-circle"></i>
+                        <span>Simulation</span>
+                    </button>
+                    <button class="nav-tab" data-tab="demo">
+                        <i class="fas fa-laptop-code"></i>
+                        <span>Live Demo</span>
+                    </button>
+                    <button class="nav-tab" data-tab="terminal">
+                        <i class="fas fa-terminal"></i>
+                        <span>Hacker View</span>
+                    </button>
+                    <button class="nav-tab" data-tab="learn">
+                        <i class="fas fa-book"></i>
+                        <span>Learn</span>
+                    </button>
+                    <button class="nav-tab" data-tab="quiz">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Quiz</span>
+                    </button>
+                    <button class="nav-tab" data-tab="prevention">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Prevention</span>
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <div class="container">
+            <!-- Simulation Tab -->
+            <div class="tab-content active" id="tab-simulation">
+                <div class="section-header reveal">
+                    <span class="badge"><i class="fas fa-graduation-cap"></i> Educational Demo</span>
+                    <h1>Man-in-the-Middle Attack</h1>
+                    <p>Learn how attackers intercept communications in real-time</p>
+                    <hr>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid reveal">
+                    <div class="stat-card">
+                        <div class="stat-value blue" id="stat-messages">0</div>
+                        <div class="stat-label">Messages Sent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value red" id="stat-intercepted">0</div>
+                        <div class="stat-label">Intercepted</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value orange" id="stat-modified">0</div>
+                        <div class="stat-label">Modified</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value green" id="stat-protected">0</div>
+                        <div class="stat-label">Protected</div>
+                    </div>
+                </div>
+
+                <!-- Scenarios -->
+                <div class="scenarios-grid reveal">
+                    <div class="scenario-card active" data-scenario="http">
+                        <div class="icon">🌐</div>
+                        <h3>HTTP Interception</h3>
+                        <p>Unencrypted web traffic</p>
+                        <span class="status vulnerable">Vulnerable</span>
+                    </div>
+                    <div class="scenario-card" data-scenario="wifi">
+                        <div class="icon">📶</div>
+                        <h3>Evil Twin WiFi</h3>
+                        <p>Fake access point</p>
+                        <span class="status warning">Rogue AP</span>
+                    </div>
+                    <div class="scenario-card" data-scenario="arp">
+                        <div class="icon">🔀</div>
+                        <h3>ARP Spoofing</h3>
+                        <p>Network layer attack</p>
+                        <span class="status warning">LAN Attack</span>
+                    </div>
+                    <div class="scenario-card" data-scenario="https">
+                        <div class="icon">🔒</div>
+                        <h3>HTTPS (Protected)</h3>
+                        <p>Encrypted connection</p>
+                        <span class="status secure">Secure</span>
+                    </div>
+                </div>
+
+                <!-- Control Panel -->
+                <div class="control-panel reveal">
+                    <div class="controls-row">
+                        <input type="text" class="control-input" id="message-input" value="My password is: secret123" placeholder="Enter message...">
+                        <button class="btn btn-primary" id="send-btn">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                        <button class="btn btn-danger" id="attacker-btn">
+                            <i class="fas fa-user-secret"></i> Enable Attacker
+                        </button>
+                        <button class="btn btn-secondary" id="reset-btn">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    <div class="quick-messages">
+                        <span style="color: var(--text); font-size: 12px;">Quick:</span>
+                        <button class="quick-btn" data-msg="My password is: SuperSecret123!">🔑 Password</button>
+                        <button class="quick-btn" data-msg="Card: 4532-1234-5678-9012 CVV: 123">💳 Credit Card</button>
+                        <button class="quick-btn" data-msg="Transfer $5000 to account 987654321">🏦 Bank Transfer</button>
+                        <button class="quick-btn" data-msg="Meeting at secret location tomorrow 3pm">📧 Private Message</button>
+                    </div>
+                </div>
+
+                <!-- Network Visualization -->
+                <div class="network-container reveal" id="network-container">
+                    <div class="network-line left" id="line-left"></div>
+                    <div class="network-line right" id="line-right"></div>
+
+                    <div class="entity alice" id="alice">
+                        <div class="avatar">👩‍💻</div>
+                        <h3>Alice</h3>
+                        <div class="role">Sender</div>
+                        <div class="ip"><i class="fas fa-desktop"></i> 192.168.1.10</div>
+                        <div class="message-box" id="alice-msg"></div>
+                    </div>
+
+                    <div class="entity eve" id="eve">
+                        <span class="active-badge"><i class="fas fa-skull"></i> ACTIVE</span>
+                        <div class="avatar">🦹</div>
+                        <h3>Eve</h3>
+                        <div class="role">Attacker</div>
+                        <div class="message-box" id="eve-msg"></div>
+                        <div class="eve-actions">
+                            <button class="eve-btn modify" id="eve-modify"><i class="fas fa-edit"></i> Modify</button>
+                            <button class="eve-btn drop" id="eve-drop"><i class="fas fa-ban"></i> Drop</button>
+                            <button class="eve-btn forward" id="eve-forward"><i class="fas fa-forward"></i> Forward</button>
+                        </div>
+                    </div>
+
+                    <div class="entity bob" id="bob">
+                        <div class="avatar">🖥️</div>
+                        <h3>Bob</h3>
+                        <div class="role">Server</div>
+                        <div class="ip"><i class="fas fa-server"></i> 203.0.113.50</div>
+                        <div class="message-box" id="bob-msg"></div>
+                    </div>
+
+                    <div class="encryption-badge" id="encryption-badge">
+                        <i class="fas fa-lock"></i> TLS 1.3 Encrypted
+                    </div>
+
+                    <div class="scenario-badge" id="scenario-badge">
+                        🌐 HTTP - Unencrypted
+                    </div>
+
+                    <div id="packet-container"></div>
+                </div>
+
+                <!-- Logs -->
+                <div class="logs-grid reveal">
+                    <div class="log-panel">
+                        <div class="log-header">
+                            <h4><i class="fas fa-list-alt"></i> Communication Log</h4>
+                            <button class="quick-btn" id="clear-log">Clear</button>
+                        </div>
+                        <div class="log-content" id="comm-log">
+                            <div class="log-entry" style="color: #6b7280; font-style: italic;">Waiting for communication...</div>
+                        </div>
+                    </div>
+                    <div class="log-panel">
+                        <div class="log-header">
+                            <h4><i class="fas fa-info-circle"></i> What's Happening</h4>
+                        </div>
+                        <div class="log-content" id="explanation">
+                            <p>👆 Click <strong>"Send Message"</strong> to start the simulation.</p>
+                            <p style="margin-top: 15px;">💡 Enable the attacker to see how a Man-in-the-Middle attack intercepts communications.</p>
+                            <p style="margin-top: 15px;">🎯 Try different scenarios to understand various attack vectors.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Captured Data -->
+                <div class="captured-panel" id="captured-panel">
+                    <div class="captured-header">
+                        <h4><i class="fas fa-skull-crossbones"></i> Data Captured by Attacker</h4>
+                        <span class="captured-count" id="captured-count">0 items</span>
+                    </div>
+                    <div class="captured-content" id="captured-content"></div>
+                </div>
+            </div>
+
+            <!-- Demo Tab -->
+            <div class="tab-content" id="tab-demo">
+                <div class="section-header reveal">
+                    <span class="badge"><i class="fas fa-laptop-code"></i> Interactive Demo</span>
+                    <h1>Live Attack Demonstration</h1>
+                    <p>See how credentials are captured in real-time</p>
+                    <hr>
+                </div>
+
+                <div class="demo-grid reveal">
+                    <div>
+                        <h3 style="color: var(--light); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-user" style="color: #60a5fa;"></i> Victim's Browser (Alice)
+                        </h3>
+                        <div class="browser-window">
+                            <div class="browser-header">
+                                <div class="browser-dots">
+                                    <div class="browser-dot red"></div>
+                                    <div class="browser-dot yellow"></div>
+                                    <div class="browser-dot green"></div>
+                                </div>
+                                <div class="browser-url">
+                                    <i class="fas fa-unlock lock" id="demo-lock"></i>
+                                    <span id="demo-url">http://mybank.example.com/login</span>
+                                </div>
+                            </div>
+                            <div class="browser-body">
+                                <form class="login-form" id="demo-form">
+                                    <div class="logo">🏦</div>
+                                    <h2>MyBank Login</h2>
+                                    <div class="form-group">
+                                        <label>Username</label>
+                                        <input type="text" id="demo-username" value="alice@email.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Password</label>
+                                        <input type="password" id="demo-password" value="MySecretPass123!">
+                                    </div>
+                                    <button type="submit" class="login-btn">
+                                        <i class="fas fa-sign-in-alt"></i> Login
+                                    </button>
+                                </form>
+                                <div id="demo-result" style="text-align: center; margin-top: 20px; display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="demo-buttons">
+                            <button class="btn btn-danger" id="demo-http">
+                                <i class="fas fa-unlock"></i> Use HTTP
+                            </button>
+                            <button class="btn btn-primary" id="demo-https">
+                                <i class="fas fa-lock"></i> Use HTTPS
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color: var(--light); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-user-secret" style="color: #f87171;"></i> Attacker's View (Eve)
+                        </h3>
+                        <div class="terminal">
+                            <div class="terminal-header">
+                                <div class="browser-dots">
+                                    <div class="browser-dot red"></div>
+                                    <div class="browser-dot yellow"></div>
+                                    <div class="browser-dot green"></div>
+                                </div>
+                                <span style="color: #6b7280; font-size: 13px; margin-left: 10px;">mitm_sniffer.py</span>
+                            </div>
+                            <div class="terminal-body" id="demo-terminal">
+                                <div class="terminal-line green">$ python mitm_sniffer.py --interface eth0</div>
+                                <div class="terminal-line gray">[*] Starting packet capture...</div>
+                                <div class="terminal-line gray">[*] ARP spoofing enabled</div>
+                                <div class="terminal-line gray">[*] Waiting for traffic...</div>
+                                <div class="terminal-line yellow">[!] Target connected: 192.168.1.10</div>
+                                <div class="terminal-line gray">_<span class="cursor-blink">▊</span></div>
+                            </div>
+                        </div>
+                        <div class="demo-captured">
+                            <h4><i class="fas fa-database"></i> Captured Credentials</h4>
+                            <div class="demo-captured-content" id="demo-captured">
+                                No credentials captured yet...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-card reveal" style="margin-top: 30px;">
+                    <h3><i class="fas fa-graduation-cap"></i> What This Demonstrates</h3>
+                    <div class="attack-types">
+                        <div class="attack-type" style="border-color: #f87171;">
+                            <h4><i class="fas fa-times-circle" style="color: #f87171;"></i> Without HTTPS</h4>
+                            <p>Login credentials sent in plain text. Attacker can read username and password. No way for victim to know they're being watched.</p>
+                        </div>
+                        <div class="attack-type" style="border-color: #4ade80;">
+                            <h4><i class="fas fa-check-circle" style="color: #4ade80;"></i> With HTTPS</h4>
+                            <p>All data encrypted end-to-end. Attacker only sees encrypted gibberish. Certificate validates server identity.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Tab -->
+            <div class="tab-content" id="tab-terminal">
+                <div class="section-header reveal">
+                    <span class="badge"><i class="fas fa-terminal"></i> Hacker Perspective</span>
+                    <h1>Attacker's Terminal</h1>
+                    <p>Simulated view of attacker tools (educational only)</p>
+                    <hr>
+                </div>
+
+                <div class="terminal-controls reveal">
+                    <button class="btn btn-primary" data-cmd="scan"><i class="fas fa-radar"></i> Network Scan</button>
+                    <button class="btn" style="background: #eab308; color: var(--dark);" data-cmd="arp"><i class="fas fa-network-wired"></i> ARP Spoof</button>
+                    <button class="btn btn-danger" data-cmd="capture"><i class="fas fa-eye"></i> Start Capture</button>
+                    <button class="btn" style="background: #8b5cf6; color: white;" data-cmd="dns"><i class="fas fa-globe"></i> DNS Spoof</button>
+                    <button class="btn btn-secondary" id="clear-terminal"><i class="fas fa-trash"></i> Clear</button>
+                </div>
+
+                <div class="hacker-terminal reveal">
+                    <div class="terminal-header">
+                        <div class="browser-dots">
+                            <div class="browser-dot red"></div>
+                            <div class="browser-dot yellow"></div>
+                            <div class="browser-dot green"></div>
+                        </div>
+                        <span style="color: #6b7280; font-size: 13px; margin-left: 10px;">root@kali:~#</span>
+                        <span style="margin-left: auto; color: #4ade80; font-size: 12px;"><i class="fas fa-circle"></i> Connected</span>
+                    </div>
+                    <div class="terminal-body" id="hacker-terminal">
+                        <pre class="terminal-line" style="color: #8b5cf6; font-size: 11px;">
+ ███▄ ▄███▓ ██▓▄▄▄█████▓ ███▄ ▄███▓
+▓██▒▀█▀ ██▒▓██▒▓  ██▒ ▓▒▓██▒▀█▀ ██▒
+▓██    ▓██░▒██▒▒ ▓██░ ▒░▓██    ▓██░
+▒██    ▒██ ░██░░ ▓██▓ ░ ▒██    ▒██ 
+▒██▒   ░██▒░██░  ▒██▒ ░ ▒██▒   ░██▒
+                        </pre>
+                        <div class="terminal-line gray">Man-in-the-Middle Attack Framework v2.0</div>
+                        <div class="terminal-line gray">Type 'help' for available commands</div>
+                        <div class="terminal-line gray" style="margin-top: 15px;">root@kali:~# <span class="cursor-blink">▊</span></div>
+                    </div>
+                </div>
+
+                <div class="terminal-stats reveal">
+                    <div class="terminal-stat">
+                        <h5><i class="fas fa-wifi"></i> Network Status</h5>
+                        <div class="terminal-stat-content">
+                            <div>Interface: eth0</div>
+                            <div>IP: 192.168.1.100</div>
+                            <div>Gateway: 192.168.1.1</div>
+                            <div style="color: #4ade80;">Status: Monitoring</div>
+                        </div>
+                    </div>
+                    <div class="terminal-stat">
+                        <h5><i class="fas fa-users"></i> Targets Found</h5>
+                        <div class="terminal-stat-content" id="terminal-targets">
+                            Run network scan to find targets...
+                        </div>
+                    </div>
+                    <div class="terminal-stat">
+                        <h5><i class="fas fa-database"></i> Captured Data</h5>
+                        <div class="terminal-stat-content" id="terminal-data">
+                            No data captured yet
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-card reveal" style="margin-top: 30px; border-color: #eab308;">
+                    <p style="color: #fbbf24;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Educational Simulation:</strong> This terminal simulates attacker tools for educational purposes only. Actual attacks without authorization are illegal and unethical.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Learn Tab -->
+            <div class="tab-content" id="tab-learn">
+                <div class="section-header reveal">
+                    <span class="badge"><i class="fas fa-book"></i> Knowledge Base</span>
+                    <h1>Understanding MITM Attacks</h1>
+                    <p>Deep dive into how these attacks work</p>
+                    <hr>
+                </div>
+
+                <div class="learn-card reveal">
+                    <h3><i class="fas fa-info-circle"></i> What is a MITM Attack?</h3>
+                    <p>A <strong>Man-in-the-Middle (MITM)</strong> attack is a cyberattack where the attacker secretly intercepts and possibly alters communications between two parties who believe they are communicating directly with each other.</p>
+                    
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin: 30px 0; flex-wrap: wrap;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 48px;">👩‍💻</div>
+                            <div style="font-size: 13px; color: var(--text);">Victim</div>
+                        </div>
+                        <div style="font-size: 24px; color: #60a5fa;">→</div>
+                        <div style="text-align: center; background: rgba(248, 113, 113, 0.1); padding: 15px 25px; border-radius: 10px; border: 2px solid #f87171;">
+                            <div style="font-size: 48px;">🦹</div>
+                            <div style="font-size: 13px; color: #f87171;">Attacker</div>
+                        </div>
+                        <div style="font-size: 24px; color: #60a5fa;">→</div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 48px;">🖥️</div>
+                            <div style="font-size: 13px; color: var(--text);">Server</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-card reveal">
+                    <h3><i class="fas fa-list-ol"></i> Attack Stages</h3>
+                    <div class="attack-stages">
+                        <div class="attack-stage">
+                            <div class="stage-number">1</div>
+                            <div class="stage-content">
+                                <h4>Positioning</h4>
+                                <p>Attacker places themselves between victim and target (via ARP spoofing, rogue WiFi, DNS poisoning)</p>
+                            </div>
+                        </div>
+                        <div class="attack-stage">
+                            <div class="stage-number">2</div>
+                            <div class="stage-content">
+                                <h4>Interception</h4>
+                                <p>All traffic flows through the attacker's machine, allowing them to capture every packet</p>
+                            </div>
+                        </div>
+                        <div class="attack-stage">
+                            <div class="stage-number">3</div>
+                            <div class="stage-content">
+                                <h4>Decryption</h4>
+                                <p>For unencrypted traffic (HTTP), data is readable. For HTTPS, attackers may try SSL stripping</p>
+                            </div>
+                        </div>
+                        <div class="attack-stage">
+                            <div class="stage-number">4</div>
+                            <div class="stage-content">
+                                <h4>Exploitation</h4>
+                                <p>Attacker steals credentials, modifies transactions, injects malware, or impersonates users</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-card reveal">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Attack Types</h3>
+                    <div class="attack-types">
+                        <div class="attack-type">
+                            <h4>🔀 ARP Spoofing</h4>
+                            <p>Attacker sends fake ARP messages to link their MAC address with a legitimate IP, redirecting traffic.</p>
+                        </div>
+                        <div class="attack-type">
+                            <h4>📶 Evil Twin WiFi</h4>
+                            <p>Creating a fake WiFi access point that mimics legitimate networks. Victims connect thinking it's safe.</p>
+                        </div>
+                        <div class="attack-type">
+                            <h4>🌐 DNS Spoofing</h4>
+                            <p>Corrupting DNS cache to redirect domain queries to attacker-controlled servers with fake websites.</p>
+                        </div>
+                        <div class="attack-type">
+                            <h4>🔓 SSL Stripping</h4>
+                            <p>Downgrading HTTPS connections to HTTP by intercepting before encryption is established.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-card reveal">
+                    <h3><i class="fas fa-bullseye"></i> What Attackers Can Steal</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                        <span class="badge">🔑 Passwords</span>
+                        <span class="badge">💳 Credit Cards</span>
+                        <span class="badge">🏦 Bank Details</span>
+                        <span class="badge">📧 Private Messages</span>
+                        <span class="badge">🍪 Session Cookies</span>
+                        <span class="badge">👤 Personal Data</span>
+                        <span class="badge">🔐 API Keys</span>
+                        <span class="badge">📁 Files</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Tab -->
+            <div class="tab-content" id="tab-quiz">
+                <div class="section-header reveal">
+                    <span class="badge"><i class="fas fa-question-circle"></i> Test Yourself</span>
+                    <h1>Security Knowledge Quiz</h1>
+                    <p>Check your understanding of MITM attacks</p>
+                    <hr>
+                </div>
+
+                <div class="quiz-container reveal">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <span style="color: var(--text);">Progress</span>
+                        <span>Score: <span id="quiz-score" style="color: #4ade80; font-weight: 700;">0</span>/<span id="quiz-total">5</span></span>
+                    </div>
+                    <div class="quiz-progress">
+                        <div class="quiz-progress-fill" id="quiz-progress" style="width: 0%;"></div>
+                    </div>
+
+                    <div id="quiz-container"></div>
+                    
+                    <div id="quiz-result" style="display: none;">
+                        <div class="quiz-question">
+                            <div class="quiz-result">
+                                <div class="emoji" id="result-emoji">🎉</div>
+                                <h2 id="result-title">Great Job!</h2>
+                                <p id="result-text">You've completed the quiz!</p>
+                                <button class="btn btn-primary" id="restart-quiz">
+                                    <i class="fas fa-redo"></i> Try Again
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prevention Tab -->
+            <div class="tab-content" id="tab-prevention">
+                <div class="section-header reveal">
+                    <span class="badge"><i class="fas fa-shield-alt"></i> Stay Safe</span>
+                    <h1>How to Protect Yourself</h1>
+                    <p>Best practices to prevent MITM attacks</p>
+                    <hr>
+                </div>
+
+                <div class="prevention-grid reveal">
+                    <div class="prevention-card">
+                        <div class="prevention-icon">🔒</div>
+                        <div class="prevention-content">
+                            <h3>Always Use HTTPS</h3>
+                            <p>Look for the padlock icon in your browser. HTTPS encrypts your data, making it unreadable to attackers.</p>
+                            <div class="prevention-tags">
+                                <span class="prevention-tag essential">Essential</span>
+                                <span class="prevention-tag recommended">Easy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prevention-card">
+                        <div class="prevention-icon">🛡️</div>
+                        <div class="prevention-content">
+                            <h3>Use a VPN</h3>
+                            <p>A Virtual Private Network encrypts all your internet traffic, protecting you even on public WiFi.</p>
+                            <div class="prevention-tags">
+                                <span class="prevention-tag essential">Highly Recommended</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prevention-card">
+                        <div class="prevention-icon">📶</div>
+                        <div class="prevention-content">
+                            <h3>Be Careful with Public WiFi</h3>
+                            <p>Public networks are prime targets for MITM attacks. Avoid banking or entering passwords.</p>
+                            <div class="prevention-tags">
+                                <span class="prevention-tag critical">High Risk Area</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prevention-card">
+                        <div class="prevention-icon">🔐</div>
+                        <div class="prevention-content">
+                            <h3>Enable Two-Factor Authentication</h3>
+                            <p>Even if attackers capture your password, 2FA requires a second verification step.</p>
+                            <div class="prevention-tags">
+                                <span class="prevention-tag essential">Essential</span>
+                                <span class="prevention-tag recommended">Free</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prevention-card">
+                        <div class="prevention-icon">⚠️</div>
+                        <div class="prevention-content">
+                            <h3>Watch for Certificate Warnings</h3>
+                            <p>Never ignore browser security warnings about invalid certificates - they could indicate an active attack.</p>
+                            <div class="prevention-tags">
+                                <span class="prevention-tag critical">Critical</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prevention-card">
+                        <div class="prevention-icon">🔄</div>
+                        <div class="prevention-content">
+                            <h3>Keep Software Updated</h3>
+                            <p>Security patches fix vulnerabilities that attackers exploit. Enable automatic updates.</p>
+                            <div class="prevention-tags">
+                                <span class="prevention-tag essential">Essential</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checklist-section reveal">
+                    <div class="checklist-header">
+                        <h3><i class="fas fa-check-square"></i> Security Checklist</h3>
+                        <span class="checklist-count"><span id="checklist-count">0</span>/8 completed</span>
+                    </div>
+                    <div class="checklist-grid">
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I check for HTTPS before entering sensitive data</span>
+                        </label>
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I use a VPN on public networks</span>
+                        </label>
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I have 2FA enabled on important accounts</span>
+                        </label>
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I don't ignore security warnings</span>
+                        </label>
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I keep my software updated</span>
+                        </label>
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I verify WiFi network names carefully</span>
+                        </label>
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I use unique passwords for each account</span>
+                        </label>
+                        <label class="checklist-item">
+                            <input type="checkbox" onchange="updateChecklist()">
+                            <span>I use a password manager</span>
+                        </label>
+                    </div>
+                    <div class="checklist-progress">
+                        <div class="checklist-progress-fill" id="checklist-progress" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🎓 Educational Demonstration Only - Created for <span class="highlight">Cybersecurity Awareness</span></p>
+            <p style="margin-top: 5px;">Understanding attacks helps us build better defenses</p>
+        </footer>
+    </div>
+
+    <script>
+        // ==================== STATE ====================
+        let attackerEnabled = false;
+        let currentScenario = 'http';
+        let isAnimating = false;
+        let interceptedMessage = null;
+        let capturedData = [];
+        let demoMode = 'http';
+        let stats = { messages: 0, intercepted: 0, modified: 0, protected: 0 };
+
+        // Quiz
+        let currentQuestion = 0;
+        let quizScore = 0;
+        const quizQuestions = [
+            {
+                question: "What is the primary goal of a Man-in-the-Middle attack?",
+                options: ["To speed up internet connections", "To intercept and potentially alter communications", "To improve website security", "To encrypt data transmissions"],
+                correct: 1,
+                explanation: "MITM attacks aim to secretly intercept communications to steal data or manipulate messages."
+            },
+            {
+                question: "Which technique allows attackers to redirect network traffic through their machine?",
+                options: ["SQL Injection", "ARP Spoofing", "Buffer Overflow", "Cross-Site Scripting"],
+                correct: 1,
+                explanation: "ARP Spoofing sends fake ARP messages to redirect network traffic through the attacker's machine."
+            },
+            {
+                question: "How does HTTPS protect against MITM attacks?",
+                options: ["It hides the website from attackers", "It makes the connection faster", "It encrypts data and verifies server identity", "It blocks all incoming connections"],
+                correct: 2,
+                explanation: "HTTPS uses TLS encryption to protect data in transit and certificates to verify the server's identity."
+            },
+            {
+                question: "What is an 'Evil Twin' attack?",
+                options: ["A malware that duplicates itself", "A fake WiFi access point mimicking a legitimate one", "A type of phishing email", "A server vulnerability"],
+                correct: 1,
+                explanation: "Evil Twin attacks involve setting up rogue WiFi access points that look like legitimate networks."
+            },
+            {
+                question: "What should you do if you see a certificate warning in your browser?",
+                options: ["Ignore it and continue", "Click 'Accept' to proceed faster", "Stop and investigate - don't proceed", "Refresh the page"],
+                correct: 2,
+                explanation: "Certificate warnings can indicate an active MITM attack. Never ignore them on sensitive sites."
+            }
+        ];
+
+        // ==================== LOADING SCREEN ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('main-content').classList.add('visible');
+                    initRevealAnimations();
+                }, 500);
+            }, 2500);
+        });
+
+        // ==================== REVEAL ANIMATIONS ====================
+        function initRevealAnimations() {
+            const reveals = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            reveals.forEach(el => observer.observe(el));
+        }
+
+        // ==================== TAB NAVIGATION ====================
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+
+                if (tab.dataset.tab === 'quiz' && currentQuestion === 0) {
+                    loadQuestion();
+                }
+
+                // Re-trigger animations
+                document.querySelectorAll(`#tab-${tab.dataset.tab} .reveal`).forEach(el => {
+                    el.classList.remove('active');
+                    setTimeout(() => el.classList.add('active'), 50);
+                });
+            });
+        });
+
+        // ==================== SCENARIO SELECTION ====================
+        document.querySelectorAll('.scenario-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                currentScenario = card.dataset.scenario;
+                
+                const badge = document.getElementById('scenario-badge');
+                const encBadge = document.getElementById('encryption-badge');
+                
+                const scenarios = {
+                    http: '🌐 HTTP - Unencrypted',
+                    wifi: '📶 Evil Twin WiFi Attack',
+                    arp: '🔀 ARP Spoofing Attack',
+                    https: '🔒 HTTPS - TLS Encrypted'
+                };
+                
+                badge.textContent = scenarios[currentScenario];
+                
+                if (currentScenario === 'https') {
+                    encBadge.classList.add('visible');
+                } else {
+                    encBadge.classList.remove('visible');
+                }
+                
+                resetSimulation();
+            });
+        });
+
+        // ==================== QUICK MESSAGES ====================
+        document.querySelectorAll('.quick-btn[data-msg]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('message-input').value = btn.dataset.msg;
+            });
+        });
+
+        // ==================== ATTACKER TOGGLE ====================
+        document.getElementById('attacker-btn').addEventListener('click', () => {
+            attackerEnabled = !attackerEnabled;
+            const btn = document.getElementById('attacker-btn');
+            const eve = document.getElementById('eve');
+            const lines = [document.getElementById('line-left'), document.getElementById('line-right')];
+            
+            if (attackerEnabled) {
+                eve.classList.add('visible');
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-user-secret"></i> Disable Attacker';
+                lines.forEach(l => l.classList.add('intercepted'));
+                addLog('⚠️ ALERT: Attacker positioned in network!', 'danger');
+            } else {
+                eve.classList.remove('visible');
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="fas fa-user-secret"></i> Enable Attacker';
+                lines.forEach(l => l.classList.remove('intercepted'));
+                addLog('✅ Attacker removed from network', 'success');
+            }
+        });
+
+        // ==================== SEND MESSAGE ====================
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+
+        async function sendMessage() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            const message = document.getElementById('message-input').value;
+            const isEncrypted = currentScenario === 'https';
+            
+            stats.messages++;
+            updateStats();
+            
+            // Show Alice's message
+            const aliceMsg = document.getElementById('alice-msg');
+            aliceMsg.textContent = `Sending: ${message.substring(0, 25)}...`;
+            aliceMsg.classList.add('visible');
+            
+            addLog(`📤 Alice sends: "${message}"`, 'info');
+            
+            const container = document.getElementById('network-container');
+            const rect = container.getBoundingClientRect();
+            
+            // Create packet
+            const packet = document.createElement('div');
+            packet.className = 'packet' + (isEncrypted ? ' encrypted' : '');
+            packet.innerHTML = `<div class="content">${isEncrypted ? '🔒 ' + encryptText(message) : message.substring(0, 30)}</div>`;
+            document.getElementById('packet-container').appendChild(packet);
+            
+            // Animation positions
+            const alice = document.getElementById('alice').getBoundingClientRect();
+            const bob = document.getElementById('bob').getBoundingClientRect();
+            const eve = document.getElementById('eve').getBoundingClientRect();
+            
+            const startX = alice.right - rect.left;
+            const startY = alice.top + alice.height/2 - rect.top - 20;
+            const endX = bob.left - rect.left - 190;
+            const endY = bob.top + bob.height/2 - rect.top - 20;
+            
+            if (attackerEnabled) {
+                const midX = eve.left + eve.width/2 - rect.left - 90;
+                const midY = eve.bottom - rect.top + 10;
+                
+                // Animate to Eve
+                await animatePacket(packet, startX, startY, midX, midY, 800);
+                
+                stats.intercepted++;
+                updateStats();
+                
+                if (isEncrypted) {
+                    stats.protected++;
+                    updateStats();
+                    
+                    addLog(`🔒 Eve intercepted encrypted data`, 'warning');
+                    
+                    const eveMsg = document.getElementById('eve-msg');
+                    eveMsg.innerHTML = `<span style="color: #4ade80;">ENCRYPTED:</span><br>${encryptText(message)}`;
+                    eveMsg.classList.add('visible');
+                    
+                    document.getElementById('explanation').innerHTML = `
+                        <p style="color: #4ade80; font-weight: 700;">🔒 Message Protected!</p>
+                        <p style="margin-top: 15px;">Eve intercepted the packet but it's encrypted with TLS!</p>
+                        <p style="margin-top: 10px; font-family: 'Roboto Mono', monospace; color: #4ade80; font-size: 12px;">${encryptText(message)}</p>
+                        <p style="margin-top: 15px;">✅ HTTPS encryption prevents the attacker from reading the data.</p>
+                    `;
+                    
+                    await sleep(1500);
+                    await animatePacket(packet, midX, midY, endX, endY, 800);
+                    
+                } else {
+                    addLog(`🔓 Eve CAPTURED plain text: "${message}"`, 'danger');
+                    interceptedMessage = message;
+                    
+                    const eveMsg = document.getElementById('eve-msg');
+                    eveMsg.innerHTML = `<span style="color: #f87171;">CAPTURED:</span><br>${message}`;
+                    eveMsg.classList.add('visible');
+                    
+                    capturedData.push({
+                        time: new Date().toLocaleTimeString(),
+                        from: 'Alice → Bob',
+                        data: message
+                    });
+                    updateCapturedPanel();
+                    
+                    document.getElementById('explanation').innerHTML = `
+                        <p style="color: #f87171; font-weight: 700;">⚠️ MESSAGE INTERCEPTED!</p>
+                        <p style="margin-top: 15px;">Eve captured the unencrypted message:</p>
+                        <p style="margin-top: 10px; background: rgba(248,113,113,0.1); padding: 10px; border-radius: 8px; font-family: 'Roboto Mono', monospace;">"${message}"</p>
+                        <p style="margin-top: 15px;">Eve can now: <strong>Modify</strong>, <strong>Drop</strong>, or <strong>Forward</strong> the message.</p>
+                    `;
+                    
+                    isAnimating = false;
+                    return;
+                }
+            } else {
+                await animatePacket(packet, startX, startY, endX, endY, 1200);
+            }
+            
+            receiveMessage(message, isEncrypted);
+        }
+
+        function receiveMessage(message, wasEncrypted) {
+            const bobMsg = document.getElementById('bob-msg');
+            bobMsg.textContent = `Received: ${message.substring(0, 25)}...`;
+            bobMsg.classList.add('visible');
+            
+            addLog(`📥 Bob received: "${message}"`, 'success');
+            
+            document.getElementById('packet-container').innerHTML = '';
+            
+            if (!attackerEnabled) {
+                document.getElementById('explanation').innerHTML = `
+                    <p style="color: #60a5fa; font-weight: 700;">📬 Message Delivered</p>
+                    <p style="margin-top: 15px;">The message was sent directly without interception.</p>
+                    <p style="margin-top: 15px; color: #fbbf24;">⚠️ Enable the attacker to see how this communication can be intercepted!</p>
+                `;
+            }
+            
+            isAnimating = false;
+        }
+
+        // ==================== EVE ACTIONS ====================
+        document.getElementById('eve-modify').addEventListener('click', async () => {
+            if (!interceptedMessage) return;
+            
+            const modified = prompt('Enter modified message:', interceptedMessage);
+            if (!modified || modified === interceptedMessage) return;
+            
+            isAnimating = true;
+            stats.modified++;
+            updateStats();
+            
+            addLog(`✏️ Eve MODIFIED message to: "${modified}"`, 'warning');
+            
+            document.getElementById('explanation').innerHTML = `
+                <p style="color: #fb923c; font-weight: 700;">✏️ MESSAGE TAMPERED!</p>
+                <p style="margin-top: 15px;">Eve changed the message from:</p>
+                <p style="text-decoration: line-through; color: #6b7280;">"${interceptedMessage}"</p>
+                <p style="margin-top: 10px;">To:</p>
+                <p style="background: rgba(251,146,60,0.1); padding: 10px; border-radius: 8px;">"${modified}"</p>
+            `;
+            
+            await forwardPacket(modified);
+            interceptedMessage = null;
+        });
+
+        document.getElementById('eve-drop').addEventListener('click', () => {
+            if (!interceptedMessage) return;
+            
+            addLog(`🚫 Eve DROPPED the message!`, 'danger');
+            
+            document.getElementById('explanation').innerHTML = `
+                <p style="color: #6b7280; font-weight: 700;">🚫 MESSAGE BLOCKED!</p>
+                <p style="margin-top: 15px;">Eve dropped the message. Bob never received it.</p>
+                <p style="margin-top: 15px;">This is a Denial of Service aspect of MITM attacks.</p>
+            `;
+            
+            document.getElementById('packet-container').innerHTML = '';
+            interceptedMessage = null;
+            isAnimating = false;
+        });
+
+        document.getElementById('eve-forward').addEventListener('click', async () => {
+            if (!interceptedMessage) return;
+            
+            isAnimating = true;
+            addLog(`➡️ Eve forwarded message (kept a copy)`, 'warning');
+            
+            await forwardPacket(interceptedMessage);
+            interceptedMessage = null;
+        });
+
+        async function forwardPacket(message) {
+            const container = document.getElementById('network-container');
+            const rect = container.getBoundingClientRect();
+            const eve = document.getElementById('eve').getBoundingClientRect();
+            const bob = document.getElementById('bob').getBoundingClientRect();
+            
+            const startX = eve.left + eve.width/2 - rect.left - 90;
+            const startY = eve.bottom - rect.top + 10;
+            const endX = bob.left - rect.left - 190;
+            const endY = bob.top + bob.height/2 - rect.top - 20;
+            
+            const packet = document.createElement('div');
+            packet.className = 'packet';
+            packet.innerHTML = `<div class="content">${message.substring(0, 30)}</div>`;
+            document.getElementById('packet-container').appendChild(packet);
+            
+            await animatePacket(packet, startX, startY, endX, endY, 800);
+            receiveMessage(message, false);
+        }
+
+        // ==================== ANIMATION HELPERS ====================
+        function animatePacket(packet, startX, startY, endX, endY, duration) {
+            return new Promise(resolve => {
+                packet.style.left = startX + 'px';
+                packet.style.top = startY + 'px';
+                
+                const startTime = Date.now();
+                
+                function animate() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - progress, 3);
+                    
+                    const x = startX + (endX - startX) * ease;
+                    const y = startY + (endY - startY) * ease;
+                    
+                    packet.style.left = x + 'px';
+                    packet.style.top = y + 'px';
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        resolve();
+                    }
+                }
+                
+                requestAnimationFrame(animate);
+            });
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function encryptText(text) {
+            return btoa(text).substring(0, 20) + '...';
+        }
+
+        // ==================== UI UPDATES ====================
+        function addLog(message, type = '') {
+            const log = document.getElementById('comm-log');
+            const first = log.querySelector('.log-entry');
+            if (first && first.style.fontStyle === 'italic') {
+                log.innerHTML = '';
+            }
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span> ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateStats() {
+            document.getElementById('stat-messages').textContent = stats.messages;
+            document.getElementById('stat-intercepted').textContent = stats.intercepted;
+            document.getElementById('stat-modified').textContent = stats.modified;
+            document.getElementById('stat-protected').textContent = stats.protected;
+        }
+
+        function updateCapturedPanel() {
+            const panel = document.getElementById('captured-panel');
+            const content = document.getElementById('captured-content');
+            const count = document.getElementById('captured-count');
+            
+            if (capturedData.length > 0) {
+                panel.classList.add('visible');
+                count.textContent = `${capturedData.length} item${capturedData.length > 1 ? 's' : ''}`;
+                content.innerHTML = capturedData.map(d => `
+                    <div class="captured-item">
+                        <div class="meta">[${d.time}] ${d.from}</div>
+                        <div class="data">${d.data}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function resetSimulation() {
+            isAnimating = false;
+            interceptedMessage = null;
+            document.getElementById('packet-container').innerHTML = '';
+            ['alice-msg', 'bob-msg', 'eve-msg'].forEach(id => {
+                document.getElementById(id).classList.remove('visible');
+            });
+        }
+
+        document.getElementById('reset-btn').addEventListener('click', resetSimulation);
+        document.getElementById('clear-log').addEventListener('click', () => {
+            document.getElementById('comm-log').innerHTML = '<div class="log-entry" style="color: #6b7280; font-style: italic;">Log cleared...</div>';
+        });
+
+        // ==================== DEMO TAB ====================
+        document.getElementById('demo-http').addEventListener('click', () => setDemoMode('http'));
+        document.getElementById('demo-https').addEventListener('click', () => setDemoMode('https'));
+
+        function setDemoMode(mode) {
+            demoMode = mode;
+            const lock = document.getElementById('demo-lock');
+            const url = document.getElementById('demo-url');
+            
+            if (mode === 'https') {
+                lock.className = 'fas fa-lock lock secure';
+                url.textContent = 'https://mybank.example.com/login';
+            } else {
+                lock.className = 'fas fa-unlock lock';
+                url.textContent = 'http://mybank.example.com/login';
+            }
+            
+            document.getElementById('demo-result').style.display = 'none';
+            document.getElementById('demo-terminal').innerHTML = `
+                <div class="terminal-line green">$ python mitm_sniffer.py --interface eth0</div>
+                <div class="terminal-line gray">[*] Starting packet capture...</div>
+                <div class="terminal-line gray">[*] Mode: ${mode.toUpperCase()}</div>
+                <div class="terminal-line yellow">[!] Target connected: 192.168.1.10</div>
+                <div class="terminal-line gray">_<span class="cursor-blink">▊</span></div>
+            `;
+            document.getElementById('demo-captured').textContent = 'No credentials captured yet...';
+        }
+
+        document.getElementById('demo-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('demo-username').value;
+            const password = document.getElementById('demo-password').value;
+            const terminal = document.getElementById('demo-terminal');
+            const captured = document.getElementById('demo-captured');
+            const result = document.getElementById('demo-result');
+            
+            if (demoMode === 'http') {
+                terminal.innerHTML += `
+                    <div class="terminal-line green">[+] HTTP POST intercepted!</div>
+                    <div class="terminal-line white">    URL: /api/login</div>
+                    <div class="terminal-line red">    username: ${username}</div>
+                    <div class="terminal-line red">    password: ${password}</div>
+                `;
+                
+                captured.innerHTML = `
+                    <div style="color: #f87171; font-weight: 700;">🔓 CREDENTIALS CAPTURED:</div>
+                    <div style="margin-top: 10px;">Username: <span style="color: white;">${username}</span></div>
+                    <div>Password: <span style="color: white;">${password}</span></div>
+                `;
+                
+                stats.intercepted++;
+            } else {
+                terminal.innerHTML += `
+                    <div class="terminal-line yellow">[!] HTTPS traffic detected</div>
+                    <div class="terminal-line gray">    Data: TLS 1.3 encrypted</div>
+                    <div class="terminal-line green">    Content: ██████████████████</div>
+                `;
+                
+                captured.innerHTML = `
+                    <div style="color: #4ade80; font-weight: 700;">🔒 PROTECTED BY HTTPS</div>
+                    <div style="margin-top: 10px; color: #6b7280;">Cannot read encrypted data</div>
+                `;
+                
+                stats.protected++;
+            }
+            
+            updateStats();
+            result.innerHTML = '<div style="color: #22c55e; font-weight: 700;">✓ Login successful!</div>';
+            result.style.display = 'block';
+            terminal.scrollTop = terminal.scrollHeight;
+        });
+
+        // ==================== TERMINAL TAB ====================
+        document.querySelectorAll('[data-cmd]').forEach(btn => {
+            btn.addEventListener('click', () => runCommand(btn.dataset.cmd));
+        });
+
+        function runCommand(cmd) {
+            const terminal = document.getElementById('hacker-terminal');
+            const targets = document.getElementById('terminal-targets');
+            const data = document.getElementById('terminal-data');
+            
+            const commands = {
+                scan: () => {
+                    addTerminalLine('root@kali:~# nmap -sn 192.168.1.0/24', 'white');
+                    addTerminalLine('[*] Starting network scan...', 'gray');
+                    setTimeout(() => {
+                        addTerminalLine('[+] Found 4 hosts:', 'green');
+                        addTerminalLine('    192.168.1.1   (Gateway)', 'gray');
+                        addTerminalLine('    192.168.1.10  (Alice-PC)', 'yellow');
+                        addTerminalLine('    192.168.1.15  (iPhone)', 'gray');
+                        addTerminalLine('    192.168.1.100 (You)', 'red');
+                        targets.innerHTML = `
+                            <div style="color: #fbbf24;">● 192.168.1.10 (Alice)</div>
+                            <div>● 192.168.1.15 (iPhone)</div>
+                        `;
+                    }, 1000);
+                },
+                arp: () => {
+                    addTerminalLine('root@kali:~# arpspoof -i eth0 -t 192.168.1.10 192.168.1.1', 'white');
+                    addTerminalLine('[*] Sending spoofed ARP packets...', 'yellow');
+                    setTimeout(() => {
+                        addTerminalLine('[+] ARP cache poisoned!', 'green');
+                    }, 800);
+                },
+                capture: () => {
+                    addTerminalLine('root@kali:~# tcpdump -i eth0 -A port 80', 'white');
+                    addTerminalLine('[*] Listening for HTTP traffic...', 'gray');
+                    setTimeout(() => {
+                        addTerminalLine('[+] HTTP POST /login', 'red');
+                        addTerminalLine('    user=alice&pass=secret123', 'red');
+                        data.innerHTML = '<div style="color: #f87171;">● Credentials captured</div>';
+                    }, 1200);
+                },
+                dns: () => {
+                    addTerminalLine('root@kali:~# dnsspoof -i eth0', 'white');
+                    addTerminalLine('[*] DNS spoofing active', 'yellow');
+                    setTimeout(() => {
+                        addTerminalLine('[+] Redirecting mybank.com → 192.168.1.100', 'green');
+                    }, 600);
+                }
+            };
+            
+            if (commands[cmd]) commands[cmd]();
+        }
+
+        function addTerminalLine(text, color) {
+            const terminal = document.getElementById('hacker-terminal');
+            const line = document.createElement('div');
+            line.className = `terminal-line ${color}`;
+            line.textContent = text;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        document.getElementById('clear-terminal').addEventListener('click', () => {
+            document.getElementById('hacker-terminal').innerHTML = `
+                <div class="terminal-line green">Terminal cleared.</div>
+                <div class="terminal-line gray">root@kali:~# <span class="cursor-blink">▊</span></div>
+            `;
+        });
+
+        // ==================== QUIZ ====================
+        function loadQuestion() {
+            if (currentQuestion >= quizQuestions.length) {
+                showResult();
+                return;
+            }
+            
+            const q = quizQuestions[currentQuestion];
+            const progress = (currentQuestion / quizQuestions.length) * 100;
+            document.getElementById('quiz-progress').style.width = progress + '%';
+            
+            document.getElementById('quiz-container').innerHTML = `
+                <div class="quiz-question">
+                    <div class="quiz-meta">Question ${currentQuestion + 1} of ${quizQuestions.length}</div>
+                    <div class="quiz-text">${q.question}</div>
+                    <div class="quiz-options">
+                        ${q.options.map((opt, i) => `
+                            <div class="quiz-option" data-index="${i}">
+                                <div class="letter">${String.fromCharCode(65 + i)}</div>
+                                <span>${opt}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.addEventListener('click', () => checkAnswer(parseInt(opt.dataset.index)));
+            });
+        }
+
+        function checkAnswer(selected) {
+            const q = quizQuestions[currentQuestion];
+            const options = document.querySelectorAll('.quiz-option');
+            
+            options.forEach((opt, i) => {
+                opt.style.pointerEvents = 'none';
+                if (i === q.correct) {
+                    opt.classList.add('correct');
+                } else if (i === selected && selected !== q.correct) {
+                    opt.classList.add('incorrect');
+                }
+            });
+            
+            if (selected === q.correct) {
+                quizScore++;
+                document.getElementById('quiz-score').textContent = quizScore;
+            }
+            
+            const container = document.querySelector('.quiz-question');
+            const explanation = document.createElement('div');
+            explanation.className = `quiz-explanation ${selected === q.correct ? 'correct' : 'incorrect'}`;
+            explanation.innerHTML = `
+                <p style="font-weight: 700; margin-bottom: 10px;">${selected === q.correct ? '✓ Correct!' : '✗ Incorrect'}</p>
+                <p>${q.explanation}</p>
+                <button class="btn btn-primary" style="margin-top: 15px;" onclick="nextQuestion()">
+                    ${currentQuestion < quizQuestions.length - 1 ? 'Next Question →' : 'See Results'}
+                </button>
+            `;
+            container.appendChild(explanation);
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            loadQuestion();
+        }
+
+        function showResult() {
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('quiz-result').style.display = 'block';
+            document.getElementById('quiz-progress').style.width = '100%';
+            
+            const percentage = (quizScore / quizQuestions.length) * 100;
+            
+            if (percentage >= 80) {
+                document.getElementById('result-emoji').textContent = '🏆';
+                document.getElementById('result-title').textContent = 'Excellent!';
+                document.getElementById('result-text').textContent = `You scored ${quizScore}/${quizQuestions.length}! Great understanding of MITM attacks.`;
+            } else if (percentage >= 60) {
+                document.getElementById('result-emoji').textContent = '👍';
+                document.getElementById('result-title').textContent = 'Good Job!';
+                document.getElementById('result-text').textContent = `You scored ${quizScore}/${quizQuestions.length}. Review the Learn tab to improve.`;
+            } else {
+                document.getElementById('result-emoji').textContent = '📚';
+                document.getElementById('result-title').textContent = 'Keep Learning!';
+                document.getElementById('result-text').textContent = `You scored ${quizScore}/${quizQuestions.length}. Check the Learn and Prevention tabs.`;
+            }
+        }
+
+        document.getElementById('restart-quiz').addEventListener('click', () => {
+            currentQuestion = 0;
+            quizScore = 0;
+            document.getElementById('quiz-score').textContent = '0';
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('quiz-result').style.display = 'none';
+            loadQuestion();
+        });
+
+        document.getElementById('quiz-total').textContent = quizQuestions.length;
+
+        // ==================== CHECKLIST ====================
+        function updateChecklist() {
+            const checkboxes = document.querySelectorAll('.checklist-item input');
+            const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+            document.getElementById('checklist-count').textContent = checked;
+            document.getElementById('checklist-progress').style.width = (checked / checkboxes.length * 100) + '%';
+        }
+    </script>
+</body>
+</html>
