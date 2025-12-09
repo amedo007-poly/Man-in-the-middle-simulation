@@ -1,0 +1,14 @@
+
+    ============================================
+    CONFIDENTIAL FILE
+    ============================================
+    
+    Name: Ahmed Dinari
+    Subject: Security Lab Work
+    Date: November 2025
+    
+    This file contains sensitive information
+    that must be protected by encryption.
+    
+    ============================================
+    

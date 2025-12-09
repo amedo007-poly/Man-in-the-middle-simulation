@@ -1,0 +1,379 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf-8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\geometry{left=2cm,right=2cm,top=2cm,bottom=2cm}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{VPN Transport Mode}
+\lhead{Packet Tracer Activity}
+\cfoot{\thepage}
+
+\title{\textbf{Packet Tracer - Configuring VPN Transport Mode}}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\chapter{Introduction}
+
+This lab activity demonstrates the critical importance of VPN (Virtual Private Network) encryption in protecting sensitive data transmission. Using Cisco Packet Tracer, we configure a VPN connection and observe the differences between unencrypted and encrypted FTP traffic.
+
+\section{Objectives}
+
+\begin{enumerate}
+    \item Observe unencrypted FTP traffic using a packet sniffer
+    \item Configure a VPN client on Phil's computer
+    \item Verify that FTP traffic is encrypted when transmitted through the VPN tunnel
+    \item Understand the security benefits of VPN encryption
+\end{enumerate}
+
+\section{Network Topology}
+
+The lab uses a Packet Tracer network with:
+\begin{itemize}
+    \item \textbf{Phil's Computer:} Client device requiring VPN protection
+    \item \textbf{VPN Server:} Gateway for secure tunneling
+    \item \textbf{Private FTP Server:} Target server behind VPN
+    \item \textbf{Attacker's Computer:} Packet sniffer to capture traffic
+\end{itemize}
+
+\chapter{Part 1: Capturing Unencrypted FTP Traffic}
+
+\section{Objective}
+
+Before implementing VPN protection, we first capture unencrypted FTP traffic to show what a cyber criminal could see without VPN encryption.
+
+\section{Initial Configuration Issue}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/error\ before\ with\ step\ 1.png}
+    \caption{Initial error encountered during setup phase - requiring configuration adjustment}
+    \label{fig:initial_error}
+\end{figure}
+
+\section{Configuring Phil's Network Settings}
+
+The first step was to configure Phil's computer with proper network settings. Initially, a static IP configuration caused connectivity issues. The solution was to change Phil's network configuration to use DHCP (Dynamic Host Configuration Protocol) for automatic IP assignment.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/fixed\ it\ with\ cahnging\ Phil\ to\ DHCP.png}
+    \caption{Resolution: Changing Phil's configuration to DHCP mode for proper network connectivity}
+    \label{fig:dhcp_fix}
+\end{figure}
+
+\section{Unencrypted FTP Credentials Visible}
+
+The following screenshots demonstrate the vulnerability of unencrypted FTP traffic:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/Step\ 2.png}
+    \caption{Unencrypted FTP traffic - Username visible in plain text through packet sniffer}
+    \label{fig:unenc_user}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/Step\ 3\ password.png}
+    \caption{Critical vulnerability: FTP password transmitted in cleartext - visible to anyone on the network}
+    \label{fig:unenc_pass}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/Step3\ user.png}
+    \caption{Complete credential compromise - Username ``cisco'' exposed in network traffic}
+    \label{fig:unenc_full}
+\end{figure}
+
+\section{Security Analysis of Part 1}
+
+\textbf{Key Vulnerabilities Observed:}
+
+\begin{itemize}
+    \item \textbf{Credential Exposure:} Both username and password are visible in plain text
+    \item \textbf{No Encryption:} FTP protocol transmits data without any encryption
+    \item \textbf{Passive Eavesdropping:} A cyber criminal can intercept credentials by simply monitoring network traffic
+    \item \textbf{No Authentication:} No verification that the connection is legitimate
+    \item \textbf{Data Integrity Risk:} Files and messages can be modified in transit
+\end{itemize}
+
+\textit{Impact:} An attacker can easily capture login credentials and gain unauthorized access to the FTP server and its contents.
+
+\chapter{Part 2: Configuring VPN Client}
+
+\section{Objective}
+
+Implement VPN protection on Phil's computer to encrypt all traffic destined for the private server.
+
+\section{Initial Ping Test}
+
+Before configuring VPN, we verify network connectivity:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part\ 2\ step1\ ping.png}
+    \caption{Initial connectivity test: Ping successful to private server before VPN configuration}
+    \label{fig:ping_before_vpn}
+\end{figure}
+
+\section{VPN Client Configuration}
+
+Phil's computer is configured with VPN settings to encrypt traffic:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part2\ step\ 2\ VPN\ config.png}
+    \caption{VPN Configuration Interface: Setting up IPSec parameters and encryption algorithm}
+    \label{fig:vpn_config}
+\end{figure}
+
+\section{VPN Client IP Assignment}
+
+Once VPN is configured, Phil's computer receives a virtual IP address from the VPN tunnel:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part2\ step2\ VPN\ config\ client\ ip.png}
+    \caption{VPN Client IP Configuration: Virtual IP assigned through secure tunnel}
+    \label{fig:vpn_client_ip}
+\end{figure}
+
+\section{VPN Connection Established}
+
+The VPN connection is now active and secured:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part2\ step2\ VPN\ popup\ window\ connected.png}
+    \caption{VPN Successfully Connected: Secure tunnel established with encryption active}
+    \label{fig:vpn_connected}
+\end{figure}
+
+\section{VPN Configuration Details}
+
+\textbf{VPN Security Parameters Implemented:}
+
+\begin{itemize}
+    \item \textbf{Encryption Protocol:} IPSec (IP Security) with AES (Advanced Encryption Standard)
+    \item \textbf{Authentication:} Pre-shared keys and digital certificates
+    \item \textbf{Integrity Check:} HMAC (Hash-based Message Authentication Code)
+    \item \textbf{Key Exchange:} IKEv2 (Internet Key Exchange version 2)
+    \item \textbf{Tunnel Mode:} Encapsulation of entire packets within encrypted wrapper
+\end{itemize}
+
+\chapter{Part 3: Verifying Encrypted FTP Traffic}
+
+\section{Objective}
+
+Confirm that FTP traffic is now encrypted when transmitted through the VPN tunnel, making credentials unreadable to potential eavesdroppers.
+
+\section{Network Configuration Check}
+
+Verify that Phil's computer has proper network connectivity through the VPN:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part3\ step\ 1\ ipconfig\ ping.png}
+    \caption{Network Status: ipconfig shows active VPN connection with assigned IP}
+    \label{fig:part3_ipconfig}
+\end{figure}
+
+\section{FTP Connection Through VPN}
+
+Phil sends FTP traffic to the private server. This traffic is now encrypted within the VPN tunnel:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part3\ Step\ 2\ Send\ FTP\ to\ Private\ Server.png}
+    \caption{FTP Request Sent: Traffic travels through secure VPN tunnel}
+    \label{fig:ftp_through_vpn}
+\end{figure}
+
+\section{Encrypted Traffic Captured by Cyber Criminal Sniffer}
+
+The attacker's packet sniffer captures the traffic, but it is now completely encrypted and unreadable:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part3\ step3\ cypted\ message\ for\ cyber\ scriminal\ sniffer\ .png}
+    \caption{Captured Encrypted Packet 1: Sniffer shows encrypted payload - credentials are protected}
+    \label{fig:encrypted_packet1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/part3\ step3\ cypted\ message\ for\ cyber\ scriminal\ sniffer\ 2\ .png.png}
+    \caption{Captured Encrypted Packet 2: Additional packets remain encrypted - no username/password visible}
+    \label{fig:encrypted_packet2}
+\end{figure}
+
+\section{Comparison: Security Analysis}
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Security Aspect} & \textbf{Without VPN} & \textbf{With VPN} \\
+\hline
+Username Visibility & \textcolor{red}{VISIBLE} & \textcolor{green}{ENCRYPTED} \\
+Password Visibility & \textcolor{red}{VISIBLE} & \textcolor{green}{ENCRYPTED} \\
+Credentials Compromise & \textcolor{red}{HIGH RISK} & \textcolor{green}{PROTECTED} \\
+Packet Inspection & \textcolor{red}{EASY} & \textcolor{green}{IMPOSSIBLE} \\
+Man-in-the-Middle Attack & \textcolor{red}{POSSIBLE} & \textcolor{green}{PREVENTED} \\
+Data Integrity & \textcolor{red}{NO GUARANTEE} & \textcolor{green}{VERIFIED} \\
+Authentication & \textcolor{red}{NOT VERIFIED} & \textcolor{green}{VERIFIED} \\
+\hline
+\end{tabular}
+\end{center}
+
+\chapter{Activity Completion}
+
+\section{Final Status}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{../screenshots/final\ screenshot\ showing\ everything\ and\ completion\ 40\ of\ 40.png}
+    \caption{Activity Complete: All 40 steps successfully completed with 100\% score}
+    \label{fig:completion}
+\end{figure}
+
+\section{Key Findings}
+
+\textbf{VPN encryption successfully protected sensitive FTP credentials:}
+
+\begin{enumerate}
+    \item \textbf{Before VPN:} Attackers could capture username ``cisco'' and password in plain text
+    \item \textbf{After VPN:} Same traffic becomes completely unreadable, providing confidentiality
+    \item \textbf{Encryption Impact:} All seven layers of network communication are encrypted
+    \item \textbf{Authentication:} VPN verified both client and server identity
+    \item \textbf{Integrity:} HMAC ensures packets were not tampered with during transit
+\end{enumerate}
+
+\chapter{Technical Concepts}
+
+\section{IPSec VPN (IP Security)}
+
+IPSec is a suite of protocols that work together to provide secure communication over IP networks:
+
+\subsection{ESP (Encapsulating Security Payload)}
+\begin{itemize}
+    \item Encrypts the actual data payload
+    \item Provides confidentiality and integrity
+    \item Uses algorithms like AES-256 for encryption
+\end{itemize}
+
+\subsection{AH (Authentication Header)}
+\begin{itemize}
+    \item Verifies authenticity and integrity of packets
+    \item Detects unauthorized modification
+    \item Uses HMAC-SHA-256 or similar algorithms
+\end{itemize}
+
+\subsection{IKE (Internet Key Exchange)}
+\begin{itemize}
+    \item Automatically negotiates security parameters
+    \item Establishes shared encryption keys
+    \item Authenticates both endpoints
+\end{itemize}
+
+\section{Tunnel Mode vs Transport Mode}
+
+\textbf{Tunnel Mode (Used in This Lab):}
+\begin{itemize}
+    \item Entire original packet is encrypted and encapsulated
+    \item New IP header added for tunnel
+    \item Complete protection: headers + payload
+    \item Typical for VPN gateways and site-to-site connections
+\end{itemize}
+
+\textbf{Transport Mode:}
+\begin{itemize}
+    \item Only payload is encrypted, original IP header remains
+    \item Lower overhead
+    \item Typical for host-to-host connections
+\end{itemize}
+
+\section{Encryption Standards Used}
+
+\subsection{AES (Advanced Encryption Standard)}
+\begin{itemize}
+    \item Symmetric encryption cipher
+    \item 128, 192, or 256-bit key sizes
+    \item NIST standard for U.S. government
+    \item Mathematically proven secure against known attacks
+\end{itemize}
+
+\subsection{HMAC (Hash-based Message Authentication Code)}
+\begin{itemize}
+    \item Ensures data integrity
+    \item Detects tampering in transit
+    \item Combined with hash functions (SHA-256)
+\end{itemize}
+
+\chapter{Conclusion}
+
+This lab clearly demonstrates the critical importance of VPN encryption in protecting sensitive data:
+
+\begin{itemize}
+    \item \textbf{Vulnerability Exposed:} Unencrypted FTP easily compromises credentials
+    \item \textbf{VPN as Solution:} Encryption renders eavesdropping impossible
+    \item \textbf{Zero Trust Principle:} Never assume network is secure - always encrypt
+    \item \textbf{Real-World Application:} Organizations use VPN for remote work, branch connectivity, and cloud access
+    \item \textbf{Defense in Depth:} Combine VPN with strong authentication and firewalls
+\end{itemize}
+
+\section{Recommendations}
+
+\begin{enumerate}
+    \item Always use VPN when connecting to corporate networks remotely
+    \item Implement VPN for all sensitive data transmission (financial, medical, personal)
+    \item Use strong encryption algorithms (AES-256, not DES or 3DES)
+    \item Regularly update VPN firmware and patch security vulnerabilities
+    \item Monitor VPN logs for suspicious connection attempts
+    \item Implement multi-factor authentication for VPN access
+    \item Use site-to-site VPNs for branch office connectivity
+\end{enumerate}
+
+\appendix
+
+\chapter{Packet Tracer Activity Details}
+
+\section{Network Components}
+
+\begin{itemize}
+    \item Phil's Computer: End client device
+    \item Router-FTP-Server: VPN gateway protecting private network
+    \item Private FTP Server: Target service behind VPN protection
+    \item Attacker's Computer: Packet sniffer for traffic analysis
+    \item Cabling: Ethernet connections between devices
+\end{itemize}
+
+\section{Steps Summary}
+
+The activity consisted of 40 steps, divided into three main phases:
+
+\begin{enumerate}
+    \item \textbf{Part 1 (Steps 1-13):} Configure network and capture unencrypted FTP traffic
+    \item \textbf{Part 2 (Steps 14-26):} Configure VPN client with IPSec parameters
+    \item \textbf{Part 3 (Steps 27-40):} Verify encrypted FTP traffic through VPN tunnel
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,176 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{hyperref}
+
+\geometry{margin=1in}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{TP Réseaux – ACL Étendues}
+\lhead{Ahmed Dinari}
+\rfoot{\thepage}
+
+\title{Packet Tracer: Démonstration des Listes de Contrôle d'Accès}
+\author{Ahmed Dinari}
+\date{Novembre 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Objectifs}
+\begin{itemize}
+    \item \textbf{Partie 1:} Vérification de la connectivité locale et test de la liste de contrôle d'accès
+    \item \textbf{Partie 2:} Suppression de la liste de contrôle d'accès et répétition du test
+\end{itemize}
+
+\section*{Contexte}
+Dans cet exercice, on observe comment une liste de contrôle d'accès peut être utilisée pour empêcher une requête ping d'atteindre les hôtes sur des réseaux distants. Après le retrait de la liste de contrôle d'accès de la configuration, les requêtes ping aboutiront.
+
+\section{Partie 1: Vérification de la connectivité locale et test de la liste de contrôle d'accès}
+
+\subsection{Étape 1: Envoi d'une requête ping au réseau local}
+\subsubsection*{Objectif}
+Vérifier la connectivité locale en envoyant des requêtes ping à partir de PC1.
+
+\subsubsection{Test 1a: Ping PC1 → PC2}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshot_ping_pc1_pc2.png}
+    \caption{Requête ping de PC1 vers PC2}
+    \label{fig:ping_pc1_pc2}
+\end{figure}
+
+\subsubsection{Test 1b: Ping PC1 → PC3}
+\textbf{Résultat:} Les requêtes ping vers le réseau local (PC2 et PC3) aboutissent.
+
+\textbf{Explication:} Les requêtes ping réussissent car elles ciblent le même réseau local. Il n'y a pas d'ACL en place pour bloquer le trafic ICMP sur le réseau local.
+
+\subsection{Étape 2: Envoi d'une requête ping aux périphériques du réseau distant}
+\subsubsection*{Objectif}
+Tester le fonctionnement des listes de contrôle d'accès en envoyant des requêtes ping vers des périphériques distants.
+
+\subsubsection{Test 2a: Ping PC1 → PC4}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshot_ping_pc1_server.png}
+    \caption{Tentative de requête ping de PC1 vers PC4 (échoue en raison de l'ACL)}
+    \label{fig:ping_pc1_pc4_fail}
+\end{figure}
+
+\subsubsection{Test 2b: Ping PC1 → DNS Server}
+\textbf{Résultat:} Les requêtes ping échouent.
+
+\textbf{Explication:} Les requêtes ping vers les réseaux distants (PC4 et DNS Server) échouent. Cela est dû à la présence d'une ACL 101 (Extended IP access list) sur le routeur R1. L'ACL est configurée pour bloquer le trafic ICMP (ping).
+
+\section{Partie 2: Suppression de la liste de contrôle d'accès et répétition du test}
+
+\subsection{Étape 1: Examen de la configuration de la liste de contrôle d'accès}
+
+\subsubsection{Commandes show pour afficher l'ACL}
+\begin{lstlisting}[language=bash]
+R1# show access-lists
+Extended IP access list 101
+    deny icmp any any echo
+    permit ip any any
+
+R1# show run
+\end{lstlisting}
+
+\subsubsection{Affichage des ACLs configurées}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshot_show_access_lists.png}
+    \caption{Résultat de la commande \texttt{show access-lists} montrant l'ACL 101}
+    \label{fig:show_access_lists_config}
+\end{figure}
+
+\subsubsection*{Analyse de l'ACL 101}
+L'ACL 101 contient deux lignes:
+\begin{enumerate}
+    \item \textbf{deny icmp any any echo}: Bloque le trafic ICMP (requêtes ping) de n'importe quelle source vers n'importe quelle destination
+    \item \textbf{permit ip any any}: Autorise tout autre trafic IP depuis n'importe quelle source vers n'importe quelle destination
+\end{enumerate}
+
+\subsection{Localisation de l'ACL sur une interface}
+
+\subsubsection*{Question: À quelle interface l'ACL 101 est-elle appliquée?}
+
+\subsubsection{Vérification sur l'interface G0/0}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshot_show_ip_interface_g0_0.png}
+    \caption{Résultat de \texttt{show ip interface gigabitEthernet 0/0} - ACL 101 appliquée en entrée}
+    \label{fig:show_ip_interface_g0_0_acl}
+\end{figure}
+
+\subsubsection{Vérification sur l'interface G0/1}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshot_show_ip_interface_g0_1.png}
+    \caption{Résultat de \texttt{show ip interface gigabitEthernet 0/1}}
+    \label{fig:show_ip_interface_g0_1_acl}
+\end{figure}
+
+\textbf{Réponse:} L'ACL 101 est appliquée sur l'interface \textbf{gigabitEthernet 0/0} en direction d'entrée (inbound).
+
+\subsection{Étape 2: Suppression de la liste de contrôle d'accès 101}
+
+\subsubsection*{Commande de suppression}
+\begin{lstlisting}[language=bash]
+R1(config)# no access-list 101
+\end{lstlisting}
+
+\subsubsection{Vérification: Ping PC1 → DNS Server après suppression}
+Après suppression de l'ACL 101, PC1 peut désormais envoyer des requêtes ping avec succès vers DNS Server.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshot_ping_pc2_server.png}
+    \caption{Requête ping réussie après suppression de l'ACL 101}
+    \label{fig:ping_after_acl_removal}
+\end{figure}
+
+\section*{Résumé des Résultats}
+
+\subsection*{Partie 1: Avant suppression de l'ACL}
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Test} & \textbf{Réseau Local} & \textbf{Réseau Distant} \\
+\hline
+Ping PC1 → PC2 & ✓ Réussi & - \\
+Ping PC1 → PC3 & ✓ Réussi & - \\
+Ping PC1 → PC4 & - & ✗ Échoué (ACL 101) \\
+Ping PC1 → DNS & - & ✗ Échoué (ACL 101) \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection*{Partie 2: Après suppression de l'ACL}
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Test} & \textbf{Résultat} \\
+\hline
+Ping PC1 → DNS Server & ✓ Réussi \\
+\hline
+\end{tabular}
+\end{center}
+
+\section*{Conclusion}
+
+Cet exercice a démontré:
+\begin{itemize}
+    \item Comment une ACL peut être utilisée pour contrôler le trafic réseau
+    \item L'ACL 101 bloquait le trafic ICMP (ping) entre réseaux distants
+    \item La suppression de l'ACL restaure la connectivité complète
+    \item La position et la direction d'application de l'ACL sont critiques pour son fonctionnement
+\end{itemize}
+
+\end{document}

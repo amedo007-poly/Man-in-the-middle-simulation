@@ -1,0 +1,908 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Lab 4: VPN Configuration}
+\lhead{Packet Tracer Activity}
+\cfoot{\thepage}
+
+\lstset{
+    language=bash,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10},
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    breakatwhitespace=true,
+    captionpos=b
+}
+
+\title{\textbf{Packet Tracer Lab 4: Configuring VPN Transport Mode} \\
+\large Securing FTP Traffic with VPN Encryption}
+\author{Student Name}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\chapter{Introduction}
+
+\section{Objective}
+This laboratory activity demonstrates the critical importance of VPN (Virtual Private Network) encryption in protecting sensitive data during network communication. The activity compares unencrypted FTP (File Transfer Protocol) traffic with VPN-secured encrypted traffic, highlighting security vulnerabilities and solutions.
+
+\section{Learning Outcomes}
+By completing this lab, students will:
+\begin{itemize}
+    \item Understand the vulnerabilities of unencrypted FTP traffic
+    \item Configure VPN client on a workstation
+    \item Demonstrate how VPN encryption protects sensitive information
+    \item Analyze network traffic using packet sniffers
+    \item Compare security differences between encrypted and unencrypted protocols
+\end{itemize}
+
+\section{Network Scenario Overview}
+The scenario simulates two organizations:
+\begin{itemize}
+    \item \textbf{Metropolis Bank HQ}: Headquarters location with Phil's computer
+    \item \textbf{Gotham Healthcare Branch}: Remote branch with secure FTP server
+    \item \textbf{Cyber Criminals}: External threat actor attempting to intercept traffic
+\end{itemize}
+
+The activity demonstrates how:
+\begin{enumerate}
+    \item Unencrypted FTP exposes credentials and file contents
+    \item VPN creates a secure tunnel for encrypted communication
+    \item Encrypted traffic protects against eavesdropping and data interception
+\end{enumerate}
+
+\chapter{Security Concepts and Theory}
+
+\section{Unencrypted FTP (File Transfer Protocol)}
+
+\subsection{What is FTP?}
+FTP is a standard protocol for transferring files over networks. However, standard FTP has critical security weaknesses:
+
+\begin{itemize}
+    \item \textbf{Plaintext Credentials}: Usernames and passwords transmitted in clear text
+    \item \textbf{No Encryption}: All file contents and commands visible to network sniffers
+    \item \textbf{No Authentication}: Vulnerable to man-in-the-middle attacks
+    \item \textbf{Session Hijacking}: Attackers can intercept and modify active sessions
+\end{itemize}
+
+\subsection{Vulnerability Risks}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Vulnerability} & \textbf{Risk} \\
+\hline
+Plaintext passwords & Account compromise \\
+Visible file names & Information disclosure \\
+No encryption & Complete data exposure \\
+No integrity check & Data modification undetected \\
+\hline
+\end{tabular}
+\caption{FTP Security Vulnerabilities}
+\end{table}
+
+\section{Virtual Private Network (VPN)}
+
+\subsection{What is VPN?}
+A Virtual Private Network (VPN) creates an encrypted tunnel between a client and a server, protecting all traffic that passes through it. Key features include:
+
+\begin{itemize}
+    \item \textbf{Encryption}: All data encrypted using cryptographic algorithms
+    \item \textbf{Authentication}: Verification of client and server identities
+    \item \textbf{Tunneling}: Encapsulation of packets within encrypted tunnel
+    \item \textbf{Integrity}: Detection of any data tampering
+\end{itemize}
+
+\subsection{VPN Benefits in This Activity}
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Benefit} & \textbf{Impact} \\
+\hline
+Data Encryption & Credentials and files hidden from sniffers \\
+Access Control & Only authenticated users can establish VPN \\
+Secure Tunneling & Traffic isolated from public network \\
+Compliance & Meets security standards for sensitive data \\
+\hline
+\end{tabular}
+\caption{VPN Security Benefits}
+\end{table}
+
+\section{VPN Transport Mode vs. Tunnel Mode}
+
+In this activity, Transport Mode is used:
+\begin{itemize}
+    \item \textbf{Transport Mode}: Encrypts only the payload (data portion) of packets
+    \item \textbf{Used for}: Host-to-host or client-to-server communication
+    \item \textbf{Advantage}: Lower overhead, faster performance
+\end{itemize}
+
+\chapter{Network Topology}
+
+\section{Packet Tracer Scenario Layout}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.9\textwidth]{../screenshots/error_before_with_step_1.png}}
+\caption{Network topology showing Metropolis Bank HQ, Gotham Healthcare Branch, and Cyber Criminals.}
+\end{figure}
+
+\section{Key Network Components}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Component} & \textbf{IP Address} & \textbf{Role} \\
+\hline
+Phil's Computer & 10.44.0.2 & FTP Client (DHCP) \\
+Public FTP Server & 209.165.201.20 & Unencrypted FTP Server \\
+Branch Router & 209.165.201.19 & VPN Gateway \\
+Private FTP Server & 10.44.2.254 & Encrypted FTP Server \\
+Cyber Criminal Sniffer & (Monitoring) & Packet Analysis Tool \\
+\hline
+\end{tabular}
+\caption{Network Components and IP Addressing}
+\end{table}
+
+\chapter{Part 1: Sending Unencrypted FTP Traffic}
+
+\section{Objective}
+Demonstrate how unencrypted FTP traffic exposes sensitive information to network sniffers and potential attackers.
+
+\section{Step-by-Step Procedure}
+
+\subsection{Step 1: Prepare the Sniffer}
+
+\begin{enumerate}
+    \item Click on the \textbf{Cyber Criminals Sniffer} icon in the Packet Tracer workspace
+    \item Navigate to the \textbf{GUI tab}
+    \item Click the \textbf{Clear} button to remove any old traffic logs
+    \item Minimize the sniffer window for later analysis
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.8\textwidth]{../screenshots/fixed_it_with_changing_Phil_to_DHCP.png}}
+\caption{Cyber Criminals Sniffer window ready to capture traffic.}
+\end{figure}
+
+\textbf{Observation:} The sniffer is now ready to capture all network traffic passing through its monitoring interface.
+
+\subsection{Step 2: Send Unencrypted FTP Traffic}
+
+\subsubsection{2.1: Access Phil's Computer}
+\begin{enumerate}
+    \item Go to \textbf{Metropolis Bank HQ}
+    \item Click on \textbf{Phil's Computer}
+    \item Open the \textbf{Desktop tab}
+    \item Click on \textbf{Command Prompt}
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.75\textwidth]{../screenshots/Step_2.png}}
+\caption{Phil's computer desktop with command prompt ready.}
+\end{figure}
+
+\subsubsection{2.2: Verify IP Configuration}
+\begin{enumerate}
+    \item In the Command Prompt, type: \texttt{ipconfig}
+    \item Record Phil's IP address
+\end{enumerate}
+
+\textbf{Command Output:}
+\begin{verbatim}
+C:\> ipconfig
+
+Windows IP Configuration
+
+Ethernet adapter Local Area Connection:
+   IP Address: 10.44.0.2
+   Subnet Mask: 255.255.255.0
+   Default Gateway: 10.44.0.1
+\end{verbatim}
+
+\textbf{Expected Output:}
+\begin{verbatim}
+IP Address: 10.44.0.2
+Subnet Mask: 255.255.255.0
+Default Gateway: 10.44.0.1
+\end{verbatim}
+
+\textbf{Note:} This is Phil's local IP address. This will change once VPN is connected.
+
+\subsubsection{2.3: Connect to Public FTP Server}
+\begin{enumerate}
+    \item Type: \texttt{ftp 209.165.201.20}
+    \item Wait for connection prompt
+    \item When asked for username: type \texttt{cisco}
+    \item When asked for password: type \texttt{publickey}
+    \item Press Enter
+\end{enumerate}
+
+\textbf{Command Sequence:}
+\begin{verbatim}
+C:\> ftp 209.165.201.20
+Connected to 209.165.201.20
+220 Public FTP Server Ready
+User: cisco
+331 User name okay, need password
+Password: publickey
+230 User logged in, proceed
+\end{verbatim}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.85\textwidth]{../screenshots/Step3_user.png}}
+\caption{FTP login with username cisco visible in clear text.}
+\end{figure}
+
+\subsubsection{2.4: Upload File}
+\begin{enumerate}
+    \item Type: \texttt{put PublicInfo.txt}
+    \item Wait for file transfer completion message
+    \item Type: \texttt{quit}
+    \item Press Enter to exit FTP
+\end{enumerate}
+
+\textbf{Command Sequence:}
+\begin{verbatim}
+ftp> put PublicInfo.txt
+200 PORT command successful
+150 Opening data connection for PublicInfo.txt
+226 Transfer complete
+ftp> quit
+221 Goodbye
+\end{verbatim}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.85\textwidth]{../screenshots/Step_2.png}}
+\caption{File upload to public FTP server with clear text transmission visible.}
+\end{figure}
+
+\subsection{Step 3: Analyze Captured Traffic}
+
+\subsubsection{3.1: Review Sniffer Capture}
+\begin{enumerate}
+    \item Maximize the \textbf{Cyber Criminals Sniffer} window
+    \item Click on the \textbf{FTP Messages} tab
+    \item Scroll to the bottom to see all captured traffic
+\end{enumerate}
+
+\subsubsection{3.2: Identify Exposed Information}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Information} & \textbf{Status} & \textbf{Risk} \\
+\hline
+Username (cisco) & \textbf{VISIBLE} in clear text & Account compromise \\
+Password (publickey) & \textbf{VISIBLE} in clear text & Full account access \\
+File name (PublicInfo.txt) & \textbf{VISIBLE} in clear text & Information disclosure \\
+File contents & \textbf{VISIBLE} in clear text & Data theft \\
+Commands & \textbf{VISIBLE} in clear text & Session hijacking \\
+\hline
+\end{tabular}
+\caption{Unencrypted FTP Traffic Analysis}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.9\textwidth]{../screenshots/error_before_with_step_1.png}}
+\caption{Sniffer capture showing plaintext username, password, and filename exposed.}
+\end{figure}
+
+\section{Key Findings - Part 1}
+
+\subsection{Security Vulnerabilities Identified}
+\begin{itemize}
+    \item \textbf{Complete Transparency}: All FTP traffic readable to anyone on the network
+    \item \textbf{Credential Exposure}: Username and password visible in network packets
+    \item \textbf{File Name Disclosure}: Filename clearly visible in FTP commands
+    \item \textbf{No Confidentiality}: File contents completely exposed
+    \item \textbf{No Integrity Protection}: No way to detect if data was tampered with
+\end{itemize}
+
+\subsection{Attack Scenarios}
+An attacker monitoring this network could:
+\begin{enumerate}
+    \item Steal the username and password for unauthorized access
+    \item Access files and modify them in transit
+    \item Impersonate the FTP user in future sessions
+    \item Monitor file transfers to identify sensitive data
+    \item Perform denial-of-service attacks by disrupting connections
+\end{enumerate}
+
+\chapter{Part 2: Configure VPN Client on Phil's Computer}
+
+\section{Objective}
+Configure a VPN client on Phil's workstation to create a secure encrypted connection to the VPN gateway at Gotham Healthcare Branch.
+
+\section{VPN Configuration Parameters}
+
+The VPN configuration will use these credentials and settings:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Parameter} & \textbf{Value} \\
+\hline
+Group Name & VPNGROUP \\
+Group Key & 123 \\
+VPN Gateway Host IP & 209.165.201.19 \\
+Username & phil \\
+Password & cisco123 \\
+\hline
+\end{tabular}
+\caption{VPN Configuration Parameters}
+\end{table}
+
+\section{Step-by-Step Procedure}
+
+\subsection{Step 1: Verify Connectivity to VPN Gateway}
+
+\begin{enumerate}
+    \item In Command Prompt (still open), type: \texttt{ping 209.165.201.19}
+    \item Wait for responses
+    \item Repeat until you receive 4 successful replies
+\end{enumerate}
+
+\textbf{Expected Output:}
+\begin{verbatim}
+C:\> ping 209.165.201.19
+Reply from 209.165.201.19: bytes=32 time<1ms TTL=63
+Reply from 209.165.201.19: bytes=32 time<1ms TTL=63
+Reply from 209.165.201.19: bytes=32 time<1ms TTL=63
+Reply from 209.165.201.19: bytes=32 time<1ms TTL=63
+\end{verbatim}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.85\textwidth]{../screenshots/part_2_step1_ping.png}}
+\caption{Command prompt showing successful ping to VPN gateway (209.165.201.19).}
+\end{figure}
+
+\subsection{Step 2: Open VPN Configuration}
+
+\begin{enumerate}
+    \item From Desktop tab, click on \textbf{VPN}
+    \item VPN Configuration dialog will open
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.8\textwidth]{../screenshots/part2_step_2_VPN_config.png}}
+\caption{VPN client configuration dialog open on Phil's computer.}
+\end{figure}
+
+\subsection{Step 3: Enter VPN Credentials}
+
+\begin{enumerate}
+    \item In the \textbf{Group Name} field, type: \texttt{VPNGROUP}
+    \item In the \textbf{Group Key} field, type: \texttt{123}
+    \item In the \textbf{Host IP} field, type: \texttt{209.165.201.19}
+    \item In the \textbf{Username} field, type: \texttt{phil}
+    \item In the \textbf{Password} field, type: \texttt{cisco123}
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.8\textwidth]{../screenshots/part2_step2_VPN_config_client_ip.png}}
+\caption{VPN configuration dialog with all required parameters entered.}
+\end{figure}
+
+\textbf{Configuration Summary:}
+\begin{verbatim}
+Group Name: VPNGROUP
+Group Key: 123
+Host IP: 209.165.201.19
+Username: phil
+Password: cisco123
+\end{verbatim}
+
+\subsection{Step 4: Establish VPN Connection}
+
+\begin{enumerate}
+    \item Click the \textbf{Connect} button
+    \item A confirmation dialog will appear
+    \item Click \textbf{OK} to confirm the VPN connection
+    \item Wait for the connection to establish
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.8\textwidth]{../screenshots/part2_step2_VPN_popup_window_connected.png}}
+\caption{VPN successfully connected confirmation dialog.}
+\end{figure}
+
+\section{Verify VPN Connection}
+
+\subsection{Step 1: Check New IP Configuration}
+
+\begin{enumerate}
+    \item Go back to the Command Prompt
+    \item Type: \texttt{ipconfig}
+    \item Observe the new IP address assigned by VPN
+\end{enumerate}
+
+\textbf{Expected Output:}
+\begin{verbatim}
+Ethernet adapter Local Area Connection:
+   IP Address: 10.44.0.2
+   Subnet Mask: 255.255.255.0
+   Default Gateway: 10.44.0.1
+
+Ethernet adapter VPN Connection:
+   IP Address: 10.44.2.x (assigned by VPN server)
+   Subnet Mask: 255.255.255.0
+   Default Gateway: 10.44.2.1
+\end{verbatim}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.85\textwidth]{../screenshots/part2_step2_VPN_config_client_ip.png}}
+\caption{ipconfig output showing both local and VPN-assigned IP addresses.}
+\end{figure}
+
+\textbf{Observation:} Phil's computer now has TWO active IP addresses:
+\begin{itemize}
+    \item \textbf{Original IP} (10.44.0.2): For local network communication
+    \item \textbf{VPN IP} (10.44.2.x): For secure communication through VPN tunnel
+\end{itemize}
+
+\section{Key Findings - Part 2}
+
+\subsection{VPN Connection Established}
+\begin{itemize}
+    \item Successfully authenticated to VPN gateway
+    \item VPN server assigned private IP address from remote network (10.44.2.0/24)
+    \item Secure encrypted tunnel now active
+    \item Multiple network interfaces operational
+\end{itemize}
+
+\chapter{Part 3: Send Encrypted FTP Traffic}
+
+\section{Objective}
+Demonstrate how VPN encryption protects FTP credentials and file transfers from network sniffers, comparing results with Part 1.
+
+\section{Step-by-Step Procedure}
+
+\subsection{Step 1: Confirm VPN IP Address}
+
+\begin{enumerate}
+    \item In Command Prompt, type: \texttt{ipconfig}
+    \item Verify VPN IP address is active (should be 10.44.2.x)
+    \item Note the VPN-assigned IP for reference
+\end{enumerate}
+
+\textbf{Expected Output:}
+\begin{verbatim}
+[Original IP addresses shown]
+Ethernet adapter VPN Connection:
+   IP Address: 10.44.2.5 (example)
+   Subnet Mask: 255.255.255.0
+\end{verbatim}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.85\textwidth]{../screenshots/part3_step_1_ipconfig_ping.png}}
+\caption{Verification that VPN IP address is active and available.}
+\end{figure}
+
+\subsection{Step 2: Connect to Private FTP Server via VPN}
+
+\begin{enumerate}
+    \item Type: \texttt{ftp 10.44.2.254}
+    \item Wait for connection to private FTP server
+    \item When asked for username: type \texttt{cisco}
+    \item When asked for password: type \texttt{secretkey}
+    \item Press Enter to authenticate
+\end{enumerate}
+
+\textbf{Command Sequence:}
+\begin{verbatim}
+C:\> ftp 10.44.2.254
+Connected to 10.44.2.254
+220 Private FTP Server Ready
+User: cisco
+331 User name okay, need password
+Password: secretkey
+230 User logged in, proceed
+\end{verbatim}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.85\textwidth]{../screenshots/part3_Step_2_Send_FTP_to_Private_Server.png}}
+\caption{FTP connection to private server through encrypted VPN tunnel.}
+\end{figure}
+
+\textbf{Key Difference:}
+Although you see the username and password on the local screen, this traffic is now encrypted through the VPN tunnel. The Cyber Criminals sniffer will NOT be able to see it.
+
+\subsection{Step 3: Upload File Through VPN}
+
+\begin{enumerate}
+    \item Type: \texttt{put PrivateInfo.txt}
+    \item Wait for file transfer completion
+    \item Type: \texttt{quit}
+    \item Press Enter to exit FTP
+\end{enumerate}
+
+\textbf{Command Sequence:}
+\begin{verbatim}
+ftp> put PrivateInfo.txt
+200 PORT command successful
+150 Opening data connection for PrivateInfo.txt
+226 Transfer complete
+ftp> quit
+221 Goodbye
+\end{verbatim}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.85\textwidth]{../screenshots/part3_Step_2_Send_FTP_to_Private_Server.png}}
+\caption{Secure file upload through encrypted VPN tunnel.}
+\end{figure}
+
+\subsection{Step 4: Analyze Encrypted Traffic}
+
+\subsubsection{4.1: Maximize Sniffer Window}
+\begin{enumerate}
+    \item Maximize the \textbf{Cyber Criminals Sniffer} window
+    \item Click on the \textbf{FTP Messages} tab
+    \item Scroll through captured traffic
+\end{enumerate}
+
+\subsubsection{4.2: Observe Encryption}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Information} & \textbf{Part 1 (Unencrypted)} & \textbf{Part 3 (Encrypted)} \\
+\hline
+Username & \textbf{VISIBLE} (cisco) & \textbf{HIDDEN} \\
+Password & \textbf{VISIBLE} (publickey) & \textbf{HIDDEN} \\
+File name & \textbf{VISIBLE} (PublicInfo.txt) & \textbf{HIDDEN} \\
+File contents & \textbf{VISIBLE} & \textbf{HIDDEN} \\
+Commands & \textbf{VISIBLE} & \textbf{HIDDEN} \\
+\hline
+\end{tabular}
+\caption{Comparison: Unencrypted vs. Encrypted FTP Traffic}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.9\textwidth]{../screenshots/part3_step3_cypted_message_for_cyber_scriminal_sniffer.png}}
+\caption{Sniffer capture showing encrypted FTP traffic with complete confidentiality.}
+\end{figure}
+
+\section{Key Findings - Part 3}
+
+\subsection{Encryption Success}
+\begin{itemize}
+    \item \textbf{No Plaintext Visible}: Username and password completely hidden
+    \item \textbf{Filename Protected}: PrivateInfo.txt not visible to sniffer
+    \item \textbf{File Contents Secured}: Data transfer encrypted end-to-end
+    \item \textbf{Commands Encrypted}: All FTP commands encrypted through VPN
+    \item \textbf{Integrity Protected}: Encrypted tunnel ensures data cannot be modified
+\end{itemize}
+
+\subsection{Security Comparison}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Security Property} & \textbf{Unencrypted FTP} & \textbf{VPN-Encrypted FTP} \\
+\hline
+Confidentiality & \textbf{X} No & \textbf{\checkmark} Yes \\
+Authentication & \textbf{X} No & \textbf{\checkmark} Yes \\
+Integrity & \textbf{X} No & \textbf{\checkmark} Yes \\
+Non-Repudiation & \textbf{X} No & \textbf{\checkmark} Yes \\
+\hline
+\end{tabular}
+\captionof{table}{Security Properties Comparison}
+\end{figure}
+
+\chapter{Analysis and Discussion}
+
+\section{Unencrypted FTP Vulnerabilities}
+
+\subsection{What Was Exposed?}
+In Part 1, the Cyber Criminals sniffer captured:
+\begin{enumerate}
+    \item \textbf{User Credentials}: Username ``cisco'' and password ``publickey''
+    \item \textbf{Server Information}: Public FTP server IP address
+    \item \textbf{File Names}: ``PublicInfo.txt'' filename clearly visible
+    \item \textbf{File Contents}: Complete file data readable in network packets
+    \item \textbf{Session Commands}: All FTP commands (USER, PASS, PUT) visible
+\end{enumerate}
+
+\subsection{Real-World Attack Scenarios}
+
+\subsubsection{Scenario 1: Credential Theft}
+An attacker could:
+\begin{itemize}
+    \item Capture the username and password
+    \item Reuse credentials to access the FTP server later
+    \item Impersonate the legitimate user
+    \item Access or modify other files on the server
+\end{itemize}
+
+\subsubsection{Scenario 2: Data Exfiltration}
+An attacker could:
+\begin{itemize}
+    \item Monitor all file transfers
+    \item Extract business-sensitive information
+    \item Identify valuable data for targeted attacks
+    \item Sell stolen information
+\end{itemize}
+
+\subsubsection{Scenario 3: Man-in-the-Middle Attack}
+An attacker could:
+\begin{itemize}
+    \item Intercept FTP commands
+    \item Modify file contents in transit
+    \item Redirect files to malicious servers
+    \item Inject malware into file transfers
+\end{itemize}
+
+\section{VPN Encryption Protection}
+
+\subsection{How VPN Protects the Connection}
+
+VPN uses a multi-layered security approach:
+
+\begin{enumerate}
+    \item \textbf{Encryption}: All traffic encrypted with strong cryptographic algorithms
+    \item \textbf{Authentication}: Both client and server must authenticate to each other
+    \item \textbf{Tunneling}: All packets encapsulated within encrypted VPN tunnel
+    \item \textbf{Integrity Checking}: Data authentication codes detect tampering
+    \item \textbf{Perfect Forward Secrecy}: Session keys change frequently
+\end{enumerate}
+
+\subsection{What Was Protected in Part 3?}
+In Part 3, the Cyber Criminals sniffer captured:
+\begin{enumerate}
+    \item \textbf{VPN Tunnel Data}: Only encrypted VPN tunnel packets visible
+    \item \textbf{FTP Contents}: All FTP traffic completely hidden
+    \item \textbf{User Credentials}: Username and password encrypted
+    \item \textbf{File Information}: Filenames and contents encrypted
+    \item \textbf{Session Details}: VPN tunnel headers visible, but not FTP details
+\end{enumerate}
+
+\section{Comparison Summary}
+
+\subsection{Traffic Visibility}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Traffic Element} & \textbf{Unencrypted} & \textbf{Encrypted} & \textbf{Implication} \\
+\hline
+FTP Commands & Visible & Hidden & Commands protected \\
+User Password & Visible & Hidden & Credentials protected \\
+File Names & Visible & Hidden & Metadata protected \\
+File Data & Visible & Hidden & Data protected \\
+Connection Metadata & Visible & Visible & Source/dest IPs visible \\
+\hline
+\end{tabular}
+\caption{Traffic Element Visibility Comparison}
+\end{table}
+
+\subsection{Security Improvements with VPN}
+
+\textbf{Confidentiality:}
+\begin{itemize}
+    \item \textbf{Before}: Zero - all data readable
+    \item \textbf{After}: Excellent - 256-bit encryption (typical)
+\end{itemize}
+
+\textbf{Authentication:}
+\begin{itemize}
+    \item \textbf{Before}: Server identity not verified
+    \item \textbf{After}: Client and server authenticate to each other
+\end{itemize}
+
+\textbf{Integrity:}
+\begin{itemize}
+    \item \textbf{Before}: No protection against tampering
+    \item \textbf{After}: Data authentication codes detect any modifications
+\end{itemize}
+
+\textbf{Overall Risk Level:}
+\begin{itemize}
+    \item \textbf{Before}: CRITICAL - All data exposed
+    \item \textbf{After}: LOW - Protected by encryption
+\end{itemize}
+
+\chapter{Conclusions and Lessons Learned}
+
+\section{Key Takeaways}
+
+\subsection{Why VPN is Essential}
+\begin{itemize}
+    \item \textbf{Plaintext Protocols are Dangerous}: Standard FTP exposes everything
+    \item \textbf{VPN Adds Multiple Layers}: Encryption, authentication, integrity checking
+    \item \textbf{Network Monitoring is Critical}: Sniffers quickly reveal vulnerabilities
+    \item \textbf{Modern Protocols Required}: All sensitive communications need encryption
+\end{itemize}
+
+\subsection{Best Practices for Secure File Transfer}
+
+\begin{enumerate}
+    \item \textbf{Never use unencrypted FTP}: Always use SFTP or FTP over VPN
+    \item \textbf{Always use strong passwords}: Even with encryption, weak passwords are risks
+    \item \textbf{Use certificates when available}: X.509 certificates for authentication
+    \item \textbf{Implement VPN for all remote connections}: Encrypt all sensitive traffic
+    \item \textbf{Monitor network traffic}: Regular security audits and packet analysis
+    \item \textbf{Update security regularly}: Keep VPN and encryption algorithms current
+\end{enumerate}
+
+\section{Real-World Applications}
+
+\subsection{Corporate Networks}
+Organizations use VPN for:
+\begin{itemize}
+    \item Remote employee access to corporate networks
+    \item Secure file transfers between offices
+    \item Protection of sensitive financial data
+    \item Compliance with regulations (HIPAA, PCI-DSS, etc.)
+\end{itemize}
+
+\subsection{Healthcare}
+Healthcare organizations must use VPN for:
+\begin{itemize}
+    \item HIPAA compliance (patient data protection)
+    \item Secure transmission of electronic health records
+    \item Telemedicine connections
+    \item Protection of personally identifiable information
+\end{itemize}
+
+\subsection{Banking and Finance}
+Banks and financial institutions require:
+\begin{itemize}
+    \item PCI-DSS compliance for payment data
+    \item End-to-end encryption for transactions
+    \item Multi-factor authentication with VPN
+    \item Constant monitoring for suspicious activity
+\end{itemize}
+
+\section{Reflection Questions}
+
+\begin{enumerate}
+    \item How would you detect an FTP password being stolen on an unencrypted network?
+    \item What other protocols suffer from the same plaintext vulnerabilities as FTP?
+    \item How would you explain to a business manager why VPN is worth the investment?
+    \item What would happen if the VPN connection was interrupted during a file transfer?
+    \item How could attackers detect that a VPN is in use (even if they can't see the data)?
+\end{enumerate}
+
+\section{Future Learning Objectives}
+
+Students who complete this lab should next explore:
+\begin{itemize}
+    \item \textbf{SFTP (SSH File Transfer Protocol)}: Modern secure file transfer alternative
+    \item \textbf{IPSec}: VPN protocol used for transport mode encryption
+    \item \textbf{TLS/SSL}: Application-layer encryption for HTTPS and other protocols
+    \item \textbf{Public Key Infrastructure (PKI)}: Certificate-based authentication systems
+    \item \textbf{Network Security Architectures}: Firewalls, DMZs, and defense-in-depth
+\end{itemize}
+
+\chapter*{Appendix}
+
+\appendix
+
+\section{Commands Reference}
+
+\subsection{IP Configuration}
+\begin{verbatim}
+C:\> ipconfig                    # Show current IP configuration
+C:\> ipconfig /all               # Show detailed IP information
+C:\> ipconfig /renew             # Renew DHCP lease
+\end{verbatim}
+
+\subsection{FTP Operations}
+\begin{verbatim}
+C:\> ftp <server_ip>             # Connect to FTP server
+ftp> user <username>             # Login with username
+ftp> pass <password>             # Enter password
+ftp> put <filename>              # Upload file to server
+ftp> get <filename>              # Download file from server
+ftp> ls                          # List files on server
+ftp> pwd                         # Print working directory
+ftp> quit                        # Exit FTP
+\end{verbatim}
+
+\subsection{Network Testing}
+\begin{verbatim}
+C:\> ping <ip_address>           # Test connectivity to host
+C:\> tracert <ip_address>        # Trace route to host
+C:\> ipconfig                    # Check IP configuration
+\end{verbatim}
+
+\section{VPN Configuration Checklist}
+
+\begin{enumerate}
+    \item [ ] VPN client installed on workstation
+    \item [ ] Group name configured: VPNGROUP
+    \item [ ] Group key configured: 123
+    \item [ ] VPN gateway IP configured: 209.165.201.19
+    \item [ ] Username configured: phil
+    \item [ ] Password configured: cisco123
+    \item [ ] VPN connection established
+    \item [ ] New IP address assigned by VPN server
+    \item [ ] Communication through VPN tunnel verified
+\end{enumerate}
+
+\section{Troubleshooting Guide}
+
+\subsection{Cannot Connect to VPN Gateway}
+\textbf{Problem}: Cannot ping VPN gateway IP (209.165.201.19)
+\begin{itemize}
+    \item Check network cable connections
+    \item Verify gateway IP address is correct
+    \item Check firewall rules
+    \item Restart networking devices
+\end{itemize}
+
+\subsection{VPN Connection Fails}
+\textbf{Problem}: VPN credentials rejected
+\begin{itemize}
+    \item Verify username is ``phil''
+    \item Verify password is ``cisco123''
+    \item Verify group name is ``VPNGROUP''
+    \item Verify group key is ``123''
+    \item Check if VPN server is running
+\end{itemize}
+
+\subsection{No New IP Address After VPN Connect}
+\textbf{Problem}: VPN connected but no IP address assigned
+\begin{itemize}
+    \item Check VPN server DHCP is enabled
+    \item Verify VPN server has available IP pool
+    \item Try disconnecting and reconnecting VPN
+    \item Check VPN client version compatibility
+\end{itemize}
+
+\section{References}
+
+\begin{itemize}
+    \item Cisco Packet Tracer Documentation
+    \item RFC 2401: Security Architecture for the Internet Protocol
+    \item RFC 2246: The TLS Protocol Version 1.0
+    \item RFC 3947: Negotiation of NAT-Traversal (NAT-T) in IKEv1
+    \item NIST Special Publication 800-77: Guide to IPSec VPNs
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,569 @@
+\documentclass[12pt]{article}
+\usepackage[utf-8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    breaklines=true,
+    showstringspaces=false,
+    frame=single,
+    rulecolor=\color{black},
+    backgroundcolor=\color{lightgray!10}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Système de Cryptographie Asymétrique RSA}
+\fancyfoot[C]{\thepage/\pageref{LastPage}}
+
+\title{\textbf{Système Complet de Cryptographie Asymétrique RSA}\\
+\large Présentation Technique et Implémentation}
+\author{Ahmed}
+\date{November 2025}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+Ce document présente une implémentation complète d'un système de cryptographie asymétrique utilisant l'algorithme RSA (Rivest-Shamir-Adleman). Le système offre des fonctionnalités de chiffrement, déchiffrement, signature numérique et gestion des clés.
+
+\section{Concepts Fondamentaux}
+
+\subsection{Cryptographie Asymétrique}
+
+La cryptographie asymétrique utilise une paire de clés:
+\begin{itemize}
+    \item \textbf{Clé publique}: utilisée pour chiffrer les données et vérifier les signatures
+    \item \textbf{Clé privée}: utilisée pour déchiffrer les données et créer les signatures
+\end{itemize}
+
+\subsection{Algorithme RSA}
+
+RSA est basé sur la difficulté mathématique de factoriser les grands nombres premiers. Les paramètres principaux sont:
+\begin{itemize}
+    \item \textbf{Taille de clé}: 2048, 3072 ou 4096 bits
+    \item \textbf{Exposant public}: 65537 (standard)
+    \item \textbf{Rembourrage}: OAEP pour le chiffrement, PSS pour les signatures
+    \item \textbf{Fonction de hachage}: SHA-256
+\end{itemize}
+
+\subsection{Opérations Cryptographiques}
+
+\subsubsection{Chiffrement (Encryption)}
+Le chiffrement RSA-OAEP transforme un message en texte ésotérique:
+\[\text{Ciphertext} = m^e \bmod n\]
+
+où $m$ est le message, $e$ l'exposant public et $n$ le module RSA.
+
+\subsubsection{Déchiffrement (Decryption)}
+Seul le détenteur de la clé privée peut déchiffrer:
+\[\text{Plaintext} = c^d \bmod n\]
+
+où $c$ est le texte chiffré et $d$ l'exposant privé.
+
+\subsubsection{Signature Numérique}
+La signature PSS authentifie le message:
+\[\text{Signature} = m^d \bmod n\]
+
+\subsubsection{Vérification de Signature}
+Confirme l'authenticité:
+\[\text{Valid} = (s^e \bmod n) == \text{Hash}(m)\]
+
+\newpage
+
+\section{Architecture du Système}
+
+\subsection{Classe Principal: AsymmetricCrypto}
+
+La classe \texttt{AsymmetricCrypto} encapsule toutes les opérations cryptographiques.
+
+\subsubsection{Initialisation}
+\begin{lstlisting}
+class AsymmetricCrypto:
+    def __init__(self, key_size=2048):
+        self.key_size = key_size
+        self.private_key = None
+        self.public_key = None
+\end{lstlisting}
+
+\begin{itemize}
+    \item \textbf{key\_size}: taille de la clé RSA (bits)
+    \item \textbf{private\_key}: clé privée (None avant génération)
+    \item \textbf{public\_key}: clé publique (None avant génération)
+\end{itemize}
+
+\subsection{Méthodes de Gestion des Clés}
+
+\subsubsection{Génération de Paires de Clés}
+\begin{lstlisting}
+def generate_key_pair(self):
+    """Génère une paire de clés RSA publique/privée"""
+    self.private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=self.key_size,
+        backend=default_backend()
+    )
+    self.public_key = self.private_key.public_key()
+    return self.private_key, self.public_key
+\end{lstlisting}
+
+\textbf{Processus}:
+\begin{enumerate}
+    \item Génère deux grands nombres premiers aléatoires
+    \item Calcule le module $n = p \times q$
+    \item Dérive les exposants public ($e=65537$) et privé ($d$)
+    \item Retourne les paires (public\_key, private\_key)
+\end{enumerate}
+
+\subsubsection{Persistence des Clés}
+
+\paragraph{Sauvegarde de la Clé Privée}
+\begin{lstlisting}
+def save_private_key(self, filename, password=None):
+    """Sauvegarde la clé privée (optionnellement chiffrée)"""
+    encryption = (serialization.BestAvailableEncryption(
+        password.encode()) if password 
+        else serialization.NoEncryption())
+    
+    pem = self.private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=encryption
+    )
+    
+    with open(filename, 'wb') as f:
+        f.write(pem)
+\end{lstlisting}
+
+\textbf{Fonctionnalités}:
+\begin{itemize}
+    \item Format PEM (texte encodé Base64)
+    \item Format PKCS8 (standard international)
+    \item Chiffrement optionnel avec mot de passe
+\end{itemize}
+
+\paragraph{Sauvegarde de la Clé Publique}
+\begin{lstlisting}
+def save_public_key(self, filename):
+    """Sauvegarde la clé publique"""
+    pem = self.public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    
+    with open(filename, 'wb') as f:
+        f.write(pem)
+\end{lstlisting}
+
+\paragraph{Chargement des Clés}
+\begin{lstlisting}
+def load_private_key(self, filename, password=None):
+    """Charge une clé privée depuis un fichier"""
+    with open(filename, 'rb') as f:
+        pem = f.read()
+    
+    pwd = password.encode() if password else None
+    self.private_key = serialization.load_pem_private_key(
+        pem, password=pwd, backend=default_backend())
+    self.public_key = self.private_key.public_key()
+
+def load_public_key(self, filename):
+    """Charge une clé publique depuis un fichier"""
+    with open(filename, 'rb') as f:
+        pem = f.read()
+    
+    self.public_key = serialization.load_pem_public_key(
+        pem, backend=default_backend())
+\end{lstlisting}
+
+\newpage
+
+\section{Opérations Cryptographiques}
+
+\subsection{Chiffrement et Déchiffrement}
+
+\subsubsection{Chiffrement (RSA-OAEP)}
+\begin{lstlisting}
+def encrypt(self, plaintext):
+    """Chiffre les données avec la clé publique"""
+    if isinstance(plaintext, str):
+        plaintext = plaintext.encode('utf-8')
+    
+    ciphertext = self.public_key.encrypt(
+        plaintext,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    
+    return base64.b64encode(ciphertext).decode('utf-8')
+\end{lstlisting}
+
+\textbf{Détails}:
+\begin{itemize}
+    \item Convertit le texte en UTF-8
+    \item Applique le rembourrage OAEP (sécurisé contre les attaques)
+    \item Encode le résultat en Base64 pour la transmission
+    \item Produit différents résultats pour le même texte (aléatoire)
+\end{itemize}
+
+\subsubsection{Déchiffrement}
+\begin{lstlisting}
+def decrypt(self, ciphertext_b64):
+    """Déchiffre les données avec la clé privée"""
+    ciphertext = base64.b64decode(ciphertext_b64)
+    plaintext = self.private_key.decrypt(
+        ciphertext,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    
+    return plaintext.decode('utf-8')
+\end{lstlisting}
+
+\textbf{Caractéristiques}:
+\begin{itemize}
+    \item Inverse exactement le processus de chiffrement
+    \item Récupère le texte clair original
+    \item Valide le rembourrage OAEP
+    \item Échoue si la clé est incorrecte
+\end{itemize}
+
+\subsubsection{Données Volumineuses}
+\begin{lstlisting}
+def encrypt_large_data(self, data, chunk_size=190):
+    """Chiffre de grandes données par division en blocs"""
+    if isinstance(data, str):
+        data = data.encode('utf-8')
+    
+    chunks = [data[i:i+chunk_size] 
+              for i in range(0, len(data), chunk_size)]
+    return [self.encrypt(chunk) for chunk in chunks]
+
+def decrypt_large_data(self, encrypted_chunks):
+    """Déchiffre les données volumineuses"""
+    return ''.join([self.decrypt(chunk) 
+                    for chunk in encrypted_chunks])
+\end{lstlisting}
+
+\textbf{Raison}: RSA 2048 bits peut seulement chiffrer ~245 octets. Pour les données plus grandes, on divise en blocs de 190 octets (taille de sécurité).
+
+\subsection{Signatures Numériques}
+
+\subsubsection{Création de Signature (PSS)}
+\begin{lstlisting}
+def sign(self, message):
+    """Crée une signature numérique"""
+    if isinstance(message, str):
+        message = message.encode('utf-8')
+    
+    signature = self.private_key.sign(
+        message,
+        padding.PSS(
+            mgf=padding.MGF1(hashes.SHA256()),
+            salt_length=padding.PSS.MAX_LENGTH
+        ),
+        hashes.SHA256()
+    )
+    
+    return base64.b64encode(signature).decode('utf-8')
+\end{lstlisting}
+
+\textbf{Processus}:
+\begin{enumerate}
+    \item Hash le message avec SHA-256
+    \item Applique le rembourrage PSS (probabiliste)
+    \item Chiffre le hash avec la clé privée
+    \item Retourne la signature en Base64
+\end{enumerate}
+
+\textbf{Propriétés}:
+\begin{itemize}
+    \item Authentifie le message (prouve qui l'a signé)
+    \item Garantit l'intégrité (détecte les modifications)
+    \item Non répudiation (le signataire ne peut nier)
+\end{itemize}
+
+\subsubsection{Vérification de Signature}
+\begin{lstlisting}
+def verify(self, message, signature_b64):
+    """Vérifie une signature numérique"""
+    if isinstance(message, str):
+        message = message.encode('utf-8')
+    
+    signature = base64.b64decode(signature_b64)
+    
+    try:
+        self.public_key.verify(
+            signature,
+            message,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return True
+    except:
+        return False
+\end{lstlisting}
+
+\textbf{Résultats}:
+\begin{itemize}
+    \item \textbf{True}: Signature valide, message authentique et intact
+    \item \textbf{False}: Signature invalide, message modifié ou mauvais signataire
+\end{itemize}
+
+\newpage
+
+\section{Cas d'Utilisation}
+
+\subsection{1. Communication Sécurisée Client-Serveur}
+
+\textbf{Scénario}: Alice envoie un secret à Bob via une connexion non sécurisée.
+
+\begin{enumerate}
+    \item Alice obtient la clé publique de Bob
+    \item Alice chiffre le message avec la clé publique de Bob
+    \item Alice envoie le message chiffré
+    \item Bob déchiffre avec sa clé privée (seul Bob peut le faire)
+\end{enumerate}
+
+\subsection{2. Authentification de Documents}
+
+\textbf{Scénario}: Alice signe un document, Bob vérifie que c'est bien Alice.
+
+\begin{enumerate}
+    \item Alice signe le document avec sa clé privée
+    \item Alice envoie le document + signature
+    \item Bob reçoit la clé publique d'Alice
+    \item Bob vérifie que la signature est valide
+\end{enumerate}
+
+\textbf{Avantages}:
+\begin{itemize}
+    \item Prouve l'identité du signataire
+    \item Détecte les modifications du document
+    \item Légalement contraignant (signature numérique)
+\end{itemize}
+
+\subsection{3. Échange de Clés Sécurisé}
+
+\textbf{Scénario}: Alice et Bob veulent établir une clé symétrique secrète.
+
+\begin{enumerate}
+    \item Alice génère une clé symétrique aléatoire
+    \item Alice chiffre la clé avec la clé publique de Bob
+    \item Alice envoie la clé chiffrée
+    \item Bob déchiffre et obtient la clé symétrique
+    \item Ils utilisent la clé pour chiffrer les communications futures
+\end{enumerate}
+
+\textbf{Hybride}: RSA est lent pour de grands volumes. On l'utilise pour échanger les clés, puis on utilise le chiffrement symétrique rapide.
+
+\subsection{4. Certificats Numériques}
+
+\textbf{Cas réel}: HTTPS, code signing, auteurs certifiés.
+
+\begin{itemize}
+    \item Une autorité de certification (CA) signe une clé publique avec sa clé privée
+    \item Cela crée un certificat (public key + signature d'autorité)
+    \item Les navigateurs vérifient que le certificat est signé par une CA reconnue
+    \item Protège contre les attaques man-in-the-middle
+\end{itemize}
+
+\newpage
+
+\section{Sécurité et Recommandations}
+
+\subsection{Points de Sécurité Critiques}
+
+\begin{enumerate}
+    \item \textbf{Protection de la clé privée}
+    \begin{itemize}
+        \item Jamais transmettre la clé privée
+        \item Chiffrer avec un mot de passe fort
+        \item Stocker sur un système sécurisé
+        \item Sauvegarde régulière et cryptée
+    \end{itemize}
+    
+    \item \textbf{Taille de clé minimale}
+    \begin{itemize}
+        \item 2048 bits: sûr jusqu'à 2030
+        \item 3072 bits: recommandé pour 2030+
+        \item 4096 bits: futur-proof
+    \end{itemize}
+    
+    \item \textbf{Gestion des clés publiques}
+    \begin{itemize}
+        \item Distribuer via des canaux sécurisés
+        \item Vérifier l'authenticité avec une CA
+        \item Rouler les clés régulièrement
+    \end{itemize}
+    
+    \item \textbf{Fonction de hachage}
+    \begin{itemize}
+        \item SHA-256: sûr et standard
+        \item Ne jamais utiliser MD5 ou SHA-1
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Limitations}
+
+\begin{itemize}
+    \item \textbf{Lenteur}: RSA est 100-1000x plus lent que le chiffrement symétrique
+    \item \textbf{Taille}: Peut seulement chiffrer de petits blocs (max ~245 bytes pour 2048 bits)
+    \item \textbf{Quantum}: Les ordinateurs quantiques pourraient casser RSA (recherche active)
+\end{itemize}
+
+\subsection{Bonnes Pratiques}
+
+\begin{enumerate}
+    \item Utiliser RSA pour:
+    \begin{itemize}
+        \item Échange de clés symétriques
+        \item Signatures numériques
+        \item Authentification
+    \end{itemize}
+    
+    \item Utiliser le chiffrement symétrique (AES) pour:
+    \begin{itemize}
+        \item Données volumineuses
+        \item Communications constantes
+        \item Performance critique
+    \end{itemize}
+    
+    \item Utiliser TLS/SSL pour:
+    \begin{itemize}
+        \item Communications HTTPS
+        \item APIs web
+        \item Services en ligne
+    \end{itemize}
+\end{enumerate}
+
+\newpage
+
+\section{Exemples Pratiques}
+
+\subsection{Exemple 1: Chiffrement Simple}
+
+\begin{lstlisting}
+from crypto_clean import AsymmetricCrypto
+
+crypto = AsymmetricCrypto(key_size=2048)
+crypto.generate_key_pair()
+
+message = "Secret important"
+encrypted = crypto.encrypt(message)
+decrypted = crypto.decrypt(encrypted)
+
+print(f"Original: {message}")
+print(f"Chiffré: {encrypted[:50]}...")
+print(f"Déchiffré: {decrypted}")
+print(f"Match: {message == decrypted}")
+\end{lstlisting}
+
+\textbf{Résultat}: Affiche le message original, sa version chiffrée, et confirme que le déchiffrement récupère le texte exact.
+
+\subsection{Exemple 2: Communication Alice-Bob}
+
+\begin{lstlisting}
+alice = AsymmetricCrypto()
+bob = AsymmetricCrypto()
+
+alice.generate_key_pair()
+bob.generate_key_pair()
+
+message = "Bonjour Bob!"
+encrypted_msg = alice.encrypt(message)
+
+alice.save_public_key("alice_public.pem")
+
+bob.load_public_key("alice_public.pem")
+received = bob.decrypt(encrypted_msg)
+
+print(f"Alice envoie: {message}")
+print(f"Bob reçoit: {received}")
+\end{lstlisting}
+
+\subsection{Exemple 3: Signature et Vérification}
+
+\begin{lstlisting}
+crypto = AsymmetricCrypto()
+crypto.generate_key_pair()
+
+document = "Accord contractuel signé"
+signature = crypto.sign(document)
+
+is_valid = crypto.verify(document, signature)
+print(f"Signature valide: {is_valid}")
+
+document_modifié = "Accord modifié frauduleusement"
+is_valid_modifié = crypto.verify(document_modifié, signature)
+print(f"Signature après modification: {is_valid_modifié}")
+\end{lstlisting}
+
+\textbf{Résultat}: 
+\begin{itemize}
+    \item Signature du document original: \texttt{True}
+    \item Signature du document modifié: \texttt{False} ✓ Détecte la fraude
+\end{itemize}
+
+\newpage
+
+\section{Conclusion}
+
+Ce système de cryptographie asymétrique RSA fournit:
+
+\begin{itemize}
+    \item \textbf{Confidentialité}: Seul le destinataire peut déchiffrer
+    \item \textbf{Authentification}: Les signatures prouvent l'identité
+    \item \textbf{Intégrité}: Les modifications sont détectées
+    \item \textbf{Non-répudiation}: Le signataire ne peut nier
+\end{itemize}
+
+\subsection{Applications Réelles}
+
+\begin{itemize}
+    \item \textbf{HTTPS/TLS}: Chiffrement des sites web
+    \item \textbf{PGP/GPG}: Email chiffré
+    \item \textbf{Code Signing}: Vérification de l'intégrité des logiciels
+    \item \textbf{Blockchain}: Signature des transactions
+    \item \textbf{APIs}: Authentification des requêtes
+    \item \textbf{Banques}: Signature numérique des documents
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+
+Pour élargir ce système:
+\begin{enumerate}
+    \item Intégrer le chiffrement symétrique (AES) pour les données volumineuses
+    \item Implémenter une CA (Certificate Authority) simple
+    \item Ajouter la gestion d'expiration des clés
+    \item Développer un système de validation de certificats
+    \item Créer une interface web sécurisée
+\end{enumerate}
+
+\end{document}
